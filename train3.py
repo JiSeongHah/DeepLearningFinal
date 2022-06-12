@@ -15,23 +15,6 @@ import pickle
 from torch.nn import Parameter
 import math
 from sklearn.neighbors import KNeighborsClassifier
-from torch.optim import AdamW, Adam,SGD
-from sklearn.model_selection import train_test_split
-from torch.utils.data import DataLoader,Dataset,TensorDataset
-from tqdm import tqdm
-import time
-import matplotlib.pyplot as plt
-import os
-import numpy as np
-import torch
-from torch import nn
-import torch.nn.functional as F
-from sklearn import preprocessing
-from sklearn.svm import SVC
-import pickle
-from torch.nn import Parameter
-import math
-from sklearn.neighbors import KNeighborsClassifier
 
 
 ##############################UTILITY Funcs ad Models ####################################
@@ -458,6 +441,111 @@ class MyFinalprojectPredictor(nn.Module):
 ####################################Deep Learning Model###################################
 
 
+
+
+#################################### SVM Version #########################################
+#################################### SVM Version #########################################
+#################################### SVM Version #########################################
+
+class MyFinalSVMClassifier():
+
+    def __init__(self,
+                 baseDir,
+                 modelPlotSaveDir,
+                 C,
+                 kernel,
+                 gamma,
+                 dataScale=True
+                 ):
+
+        self.baseDir = baseDir
+        self.modelPlotSaveDir = modelPlotSaveDir
+        self.dataScale = dataScale
+
+        self.C = C
+        self.kernel = kernel
+        self.gamma = gamma
+
+        ########### train and validation Data config#######################
+        trainDataBefSplit = np.loadtxt(self.baseDir+'train_input.txt',delimiter=',')
+        trainLabelBefSplit = np.loadtxt(self.baseDir+'train_target.txt')
+        if self.dataScale == True:
+            scaler = preprocessing.StandardScaler().fit(trainDataBefSplit)
+            trainDataBefSplit = scaler.transform(trainDataBefSplit)
+
+
+        self.trnInput,\
+        self.valInput,\
+        self.trnLabel,\
+        self.valLabel = train_test_split(trainDataBefSplit,
+                                         trainLabelBefSplit,
+                                         test_size=0.1,
+                                         shuffle=True)
+        ########### train and validation Data config#######################
+
+
+        ############ test Data Config ###################################
+        testData = np.loadtxt(self.baseDir+'test_input.txt',delimiter=',')
+        if self.dataScale == True:
+            scaler = preprocessing.StandardScaler().fit(testData)
+            self.testData = scaler.transform(testData)
+        ############ test Data Config ###################################
+
+    def getAcc(self,pred,label):
+
+        ######### one is positive, zero is negative ##########
+        labelZero = label == 0
+        labelOne = label == 1
+
+        predZero = pred == 0
+        predOne = pred == 1
+
+        TP = np.sum((labelOne == predOne)*1.0)
+        TN = np.sum((labelZero == predZero)*1.0)
+        FP = np.sum((labelZero == predOne)*1.0)
+        FN = np.sum((labelOne == predZero)*1.0)
+
+        oneAcc = TP/(TP+FN)
+        zeroAcc = TN/(TN+FP)
+
+        balancedAcc = 0.5 * (oneAcc + zeroAcc)
+
+        return balancedAcc
+
+
+    def trainAndSaveSVC(self):
+
+        clf = SVC(C=self.C,
+                  kernel=self.kernel,
+                  gamma=self.gamma,
+                  verbose=True)
+
+        clf.fit(self.trnInput,self.trnLabel)
+
+        pred = clf.predict(self.valInput)
+
+        acc = self.getAcc(pred,self.valLabel)
+
+        for i in range(5):
+            print(acc)
+
+        with open(self.modelPlotSaveDir+'savedModel.pkl','wb') as ff:
+            pickle.dump(clf,ff)
+
+        print(f'SVC training with C : {self.C}, kernel : {self.kernel}, gamma : {self.gamma} complete!!!')
+        print('')
+        print('')
+        print('')
+
+#################################### SVM Version #########################################
+#################################### SVM Version #########################################
+#################################### SVM Version #########################################
+
+
+
+
+
+
 ################################### Arcface with KNN version ##############################
 ################################### Arcface with KNN version ##############################
 ################################### Arcface with KNN version ##############################
@@ -806,236 +894,131 @@ class MyFinalArcface(nn.Module):
                     break
 
 
+if __name__ == '__main__':
 
 
-
-
-
-##################################### code for test ###################################################
-##################################### code for test ###################################################
-##################################### code for test ###################################################
-
-def DNNVer(modelLoadDir,
-           dataLoadDir,
-           testResultSaveDir,
-           dataScale,
-           gpuUse=True):
-
-    predictor = torch.load(modelLoadDir)
-
-
-    ############ test Data Config ###################################
-    testData = np.loadtxt(dataLoadDir, delimiter=',')
-    if dataScale == True:
-        scaler = preprocessing.StandardScaler().fit(testData)
-        testData = scaler.transform(testData)
-
-    testDataset = TensorDataset(torch.from_numpy(testData))
-    tstDataloader = DataLoader(testDataset, batch_size=1, shuffle=False)
-    ############ test Data Config ###################################
-
-    ##### use GPU or not ###########################
-    if gpuUse == True:
-        USE_CUDA = torch.cuda.is_available()
-        print(USE_CUDA)
-        device = torch.device('cuda' if USE_CUDA else 'cpu')
-        print('학습을 진행하는 기기:', device)
-    else:
-        device = torch.device('cpu')
-        print('학습을 진행하는 기기:', device)
-    ##### use GPU or not ###########################
-
-    predictor.model.to(device)
-
-    predictor.model.eval()
-    TestDataloader = tqdm(tstDataloader)
-
-    results = []
-
-    with torch.set_grad_enabled(False):
-
-        for idx,(inputs,) in enumerate(TestDataloader):
-
-            inputs = inputs.float()
-            inputs = inputs.to(device)
-            logits = predictor.forward(inputs).cpu()
-
-            preds = torch.argmax(logits,dim=1)
-
-            results.append(str(preds.item()))
-            TestDataloader.set_description(f'Processing : {idx} of {len(TestDataloader)} with pred : {preds.item()}')
-
-    print(np.mean(predictor.valAccLstAvg[-10]))
-
-    with open(testResultSaveDir+'test_output_하지성.txt','w') as FF:
-        for eachResult in results:
-            FF.write(eachResult+'\n')
-
-
-
-def SVCVer(modelLoadDir,
-           dataLoadDir,
-           testResultSaveDir,
-           dataScale):
-
-    with open(modelLoadDir,'rb') as ff:
-        svcClf = pickle.load(ff)
-
-    ############ test Data Config ###################################
-    testData = np.loadtxt(dataLoadDir, delimiter=',')
-    if dataScale == True:
-        scaler = preprocessing.StandardScaler().fit(testData)
-        testData = scaler.transform(testData)
-
-    ############ test Data Config ###################################
-
-    predictedLabel = svcClf.predict(testData)
-    results = []
-
-    for each in predictedLabel:
-        results.append(str(each))
-
-    with open(testResultSaveDir+'test_output_하지성.txt','w') as FF:
-        for eachResult in results:
-            FF.write(eachResult+'\n')
-
-def arcFaceVer(modelLoadDir,
-               dataLoadDir,
-               testResultSaveDir,
-               dataScale,
-               gpuUse=True):
-
-    predictor = torch.load(modelLoadDir)
-
-    ############ test Data Config ###################################
-    testData = np.loadtxt(dataLoadDir, delimiter=',')
-    if dataScale == True:
-        scaler = preprocessing.StandardScaler().fit(testData)
-        testData = scaler.transform(testData)
-
-    testDataset = TensorDataset(torch.from_numpy(testData))
-    tstDataloader = DataLoader(testDataset, batch_size=1, shuffle=False)
-    ############ test Data Config ###################################
-
-    ##### use GPU or not ###########################
-    if gpuUse == True:
-        USE_CUDA = torch.cuda.is_available()
-        print(USE_CUDA)
-        device = torch.device('cuda' if USE_CUDA else 'cpu')
-        print('학습을 진행하는 기기:', device)
-    else:
-        device = torch.device('cpu')
-        print('학습을 진행하는 기기:', device)
-    ##### use GPU or not ###########################
-
-    predictor.MyBackbone.to(device)
-
-    predictor.MyBackbone.eval()
-    TestDataloader = tqdm(tstDataloader)
-    TDataloader = tqdm(predictor.trnDataloader)
-
-    results = []
-
-    criterionFeatures = []
-    criterionLabels = []
-
-    with torch.set_grad_enabled(False):
-        for idx, (bInput, bLabel) in enumerate(TDataloader):
-            bLabel = bLabel.long()
-            bInput = bInput.float()
-            bInput = bInput.to(device)
-
-            bFeature = predictor.forward(bInput).cpu()
-
-            criterionFeatures.append(bFeature.clone().detach())
-            criterionLabels.append(bLabel)
-
-    criterionFeatures = torch.cat(criterionFeatures).numpy()
-    criterionLabels = torch.cat(criterionLabels).numpy()
-
-    knnClf = KNeighborsClassifier(n_neighbors=predictor.topkNum)
-
-    compareFeatures = []
-    compareGTLabels = []
-
-    with torch.set_grad_enabled(False):
-        for idx, (valBInput, ) in enumerate(TestDataloader):
-            valBInput = valBInput.float()
-            valBInput = valBInput.to(device)
-            valBFeature = predictor.forward(valBInput).cpu()
-
-            compareFeatures.append(valBFeature.clone().detach())
-
-
-    compareFeatures = torch.cat(compareFeatures).numpy()
-    print(criterionFeatures.shape, criterionLabels.shape)
-
-    knnClf.fit(criterionFeatures, criterionLabels)
-    predictedLabels = knnClf.predict(compareFeatures)
-
-    for each in predictedLabels:
-        results.append(str(each))
-
-    with open(testResultSaveDir+'test_output_하지성.txt','w') as FF:
-        for eachResult in results:
-            FF.write(eachResult+'\n')
-
-##################################### code for test ###################################################
-##################################### code for test ###################################################
-##################################### code for test ###################################################
-
-if __name__=='__main__':
-
-    # ################ SVC TEST ###########################################
-    # dir = '/home/a286winteriscoming/Downloads/FinalHomwork/dirSVCScaleFalse/'
-    # dataDir = '/home/a286winteriscoming/Downloads/FinalHomwork/test_input.txt'
-    # folderLst = os.listdir(dir)
-    # folderLst = [i for i in folderLst if i.endswith('.txt')==False]
+    # ###################SVC TRAIN###################################
+    # ###################SVC TRAIN###################################
+    # ###################SVC TRAIN###################################
+    # baseDir = '/home/a286winteriscoming/Downloads/FinalHomwork/'
+    # CLst = [0.01,0.1,1,10,100]
+    # gammaLst = [0.001,0.01,0.1,1,10]
+    # kernelLst = ['rbf','poly','sigmoid']
     #
-    # for eachFolder in folderLst:
-    #     SVCVer(modelLoadDir=dir+eachFolder+'/savedModel.pkl',
-    #            dataLoadDir=dataDir,
-    #            testResultSaveDir=dir+eachFolder+'_',
-    #            dataScale=False)
-    #     print(f'{eachFolder} complete')
+    # for kernel in kernelLst:
+    #     for C in CLst:
+    #         for gamma in gammaLst:
+    #
+    #             specificDirName = mk_name(dir='SVC/',
+    #                                       kernel=kernel,
+    #                                       C=C,
+    #                                       gamma=gamma)
+    #
+    #             plotSaveDir = baseDir+specificDirName +'/'
+    #             createDirectory(plotSaveDir)
+    #
+    #             doProject = MyFinalSVMClassifier(baseDir=baseDir,
+    #                                              modelPlotSaveDir=plotSaveDir,
+    #                                              C=C,
+    #                                              kernel='rbf',
+    #                                              gamma=gamma)
+    #
+    #             doProject.trainAndSaveSVC()
+    # ###################SVC TRAIN###################################
+    # ###################SVC TRAIN###################################
+    # ###################SVC TRAIN###################################
+
+
+
+    # #######################DNN TRAIN #############################
+    # #######################DNN TRAIN #############################
+    # #######################DNN TRAIN #############################
+    # baseDir = '/home/a286/hjs_dir1/DeepLearningFinal/'
+    # whichModel = 'simpleDNN'
+    # optimLst = ['adam','sgd','adamw']
+    # innerNumLst = [64,128,256]
+    # lossLst = ['weightFocal','vanillaFocal','normalCE']
     #
     #
-    # ################ SVC TEST ###########################################
-
-
-
-
-    ############### DNN TEST ###########################################
-    dir = '/home/a286winteriscoming/Downloads/FinalHomwork/dirDNN/'
-    dataDir = '/home/a286winteriscoming/Downloads/FinalHomwork/test_input.txt'
-    folderLst = os.listdir(dir)
-    folderLst = [i for i in folderLst if i.endswith('.txt')==False]
-
-    for eachFolder in folderLst:
-        DNNVer(modelLoadDir=dir+eachFolder+'/models.pth',
-               dataLoadDir=dataDir,
-               testResultSaveDir=dir+eachFolder+'_',
-               dataScale=True)
-        print(f'{eachFolder} complete')
-
-
-    ############### SVC TEST ###########################################
-
-    # ############### arcface TEST ###########################################
-    # dir = '/home/a286winteriscoming/Downloads/FinalHomwork/dirarcfaceScaleFalse/'
-    # dataDir = '/home/a286winteriscoming/Downloads/FinalHomwork/test_input.txt'
-    # folderLst = os.listdir(dir)
-    # folderLst = [i for i in folderLst if i.endswith('.txt')==False]
+    # for optim in optimLst:
+    #     for innerNum in innerNumLst:
+    #         for whichLoss in lossLst:
+    #             specificDirName = mk_name(dir='DNN/',
+    #                                       optim=optim,
+    #                                       innerNum=innerNum,
+    #                                       loss=whichLoss)
     #
-    # for eachFolder in folderLst:
-    #     arcFaceVer(modelLoadDir=dir+eachFolder+'/models.pth',
-    #            dataLoadDir=dataDir,
-    #            testResultSaveDir=dir+eachFolder+'_',
-    #            dataScale=False)
-    #     print(f'{eachFolder} complete')
+    #             plotSaveDir = baseDir+specificDirName +'/'
+    #             createDirectory(plotSaveDir)
+    #             doProject = MyFinalprojectPredictor(baseDir=baseDir,
+    #                                                 plotSaveDir=plotSaveDir,
+    #                                                 whichModel=whichModel,
+    #                                                 innerNum=innerNum,
+    #                                                 optim=optim,
+    #                                                 whichLoss=whichLoss)
     #
-    #
-    # ############### SVC TEST ###########################################
+    #             startTrain = doProject.START_TRN_VAL(iterNum=100)
+    #             torch.save(doProject,plotSaveDir+'models.pth')
+    # #######################DNN TRAIN #############################
+    # #######################DNN TRAIN #############################
+    # #######################DNN TRAIN #############################
+
+
+    #######################Arcface TRAIN ########################
+    #######################Arcface TRAIN ########################
+    #######################Arcface TRAIN ########################
+
+    baseDir = '/home/a286/hjs_dir1/DeepLearningFinal/'
+    whichModel = 'simpleDNN'
+    optim = 'adam'
+    innerNumLst = [64,128,256]
+    sLst = [16,32,64]
+    mLst = [0.4,0.5,0.6]
+    whichLoss = 'normalCE'
+
+    for innerNum in innerNumLst:
+        for s in sLst:
+            for m in mLst:
+                specificDirName = mk_name(dir='arcface/',
+                                          innerNum=innerNum,
+                                          s=s,
+                                          m=m)
+
+                plotSaveDir = baseDir+specificDirName +'/'
+                createDirectory(plotSaveDir)
+                doProject = MyFinalArcface(baseDir=baseDir,
+                                           modelPlotSaveDir=plotSaveDir,
+                                           lossMethod=whichLoss,
+                                           innerNum=innerNum,
+                                           s=s,
+                                           m=m
+                                           )
+
+                startTrain = doProject.START_TRN_VAL(iterNum=100)
+                torch.save(doProject,plotSaveDir+'models.pth')
+
+
+    #######################Arcface TRAIN ########################
+    #######################Arcface TRAIN ########################
+    #######################Arcface TRAIN ########################
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 

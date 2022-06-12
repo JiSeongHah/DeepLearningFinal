@@ -222,7 +222,7 @@ class MyFinalprojectPredictor(nn.Module):
                                   lr=1e-3,  # 학습률
                                   )
         else:
-            self.optim = AdamW(self.model.parameters(),
+            self.optimizer = AdamW(self.model.parameters(),
                                   lr=self.lr,  # 학습률
                                    weight_decay=0.01
                                   # 0으로 나누는 것을 방지하기 위한 epsilon 값
@@ -484,12 +484,9 @@ class MyFinalSVMClassifier():
         ########### train and validation Data config#######################
 
 
-        ############ test Data Config ###################################
-        testData = np.loadtxt(self.baseDir+'test_input.txt',delimiter=',')
-        if self.dataScale == True:
-            scaler = preprocessing.StandardScaler().fit(testData)
-            self.testData = scaler.transform(testData)
-        ############ test Data Config ###################################
+        self.resultAccLst = []
+
+
 
     def getAcc(self,pred,label):
 
@@ -526,8 +523,8 @@ class MyFinalSVMClassifier():
 
         acc = self.getAcc(pred,self.valLabel)
 
-        for i in range(5):
-            print(acc)
+        with open(self.modelPlotSaveDir + 'resultAcc.txt', 'w') as fff:
+            fff.write(str(acc))
 
         with open(self.modelPlotSaveDir+'savedModel.pkl','wb') as ff:
             pickle.dump(clf,ff)
@@ -896,99 +893,112 @@ class MyFinalArcface(nn.Module):
 
 if __name__ == '__main__':
 
-    # baseDir = '/home/a286winteriscoming/Downloads/FinalHomwork/'
-    # modelPlotSaveDir = baseDir
-    # lossMethod = 'vanillaFocal'
-    # s = 16
-    # m = 0.3
-    #
-    # doProject = MyFinalArcface(baseDir=baseDir,
-    #                            modelPlotSaveDir=modelPlotSaveDir,
-    #                            lossMethod=lossMethod,
-    #                            s=s,
-    #                            m=m)
-    #
-    # doProject.START_TRN_VAL(iterNum=100)
 
+    ###################SVC TRAIN###################################
+    ###################SVC TRAIN###################################
+    ###################SVC TRAIN###################################
     baseDir = '/home/a286winteriscoming/Downloads/FinalHomwork/'
-    CLst = [0.1,1,10]
+    CLst = [0.01,0.1,1,10,100]
+    gammaLst = [0.001,0.01,0.1,1,10]
     kernelLst = ['rbf','poly','sigmoid']
 
     for kernel in kernelLst:
         for C in CLst:
+            for gamma in gammaLst:
 
-            specificDirName = mk_name(dir='SVC/',
-                                      kernel=kernel,
-                                      C=C)
-
-            plotSaveDir = baseDir+specificDirName +'/'
-            createDirectory(plotSaveDir)
-
-            doProject = MyFinalSVMClassifier(baseDir=baseDir,
-                                             modelPlotSaveDir=plotSaveDir,
-                                             C=1,
-                                             kernel='rbf',
-                                             gamma='auto')
-
-            doProject.trainAndSaveSVC()
-
-    baseDir = '/home/a286winteriscoming/Downloads/FinalHomwork/'
-    whichModel = 'simpleDNN'
-    optimLst = ['adam','sgd','adamw']
-    innerNumLst = [64,128,256]
-    lossLst = ['weightFocal','vanillaFocal','normalCE']
-
-    for optim in optimLst:
-        for innerNum in innerNumLst:
-            for whichLoss in lossLst:
-                specificDirName = mk_name(dir='DNN/',
-                                          optim=optim,
-                                          innerNum=innerNum,
-                                          loss=whichLoss)
+                specificDirName = mk_name(dir='SVC/',
+                                          kernel=kernel,
+                                          C=C,
+                                          gamma=gamma)
 
                 plotSaveDir = baseDir+specificDirName +'/'
                 createDirectory(plotSaveDir)
-                doProject = MyFinalprojectPredictor(baseDir=baseDir,
-                                                    plotSaveDir=plotSaveDir,
-                                                    whichModel=whichModel,
-                                                    whichLoss=whichLoss)
 
-                startTrain = doProject.START_TRN_VAL(iterNum=100)
-                torch.save(doProject,plotSaveDir+'models.pth')
+                doProject = MyFinalSVMClassifier(baseDir=baseDir,
+                                                 modelPlotSaveDir=plotSaveDir,
+                                                 C=C,
+                                                 kernel='rbf',
+                                                 gamma=gamma,
+                                                 dataScale=True)
 
-
-
-    baseDir = '/home/a286winteriscoming/Downloads/FinalHomwork/'
-    whichModel = 'simpleDNN'
-    optim = 'adam'
-    innerNumLst = [64,128,256]
-    sLst = [16,32,64]
-    mLst = [0.4,0.5,0.6]
-    whichLoss = 'normalCE'
-
-    for innerNum in innerNumLst:
-        for s in sLst:
-            for m in mLst:
-                specificDirName = mk_name(dir='arcface/',
-                                          innerNum=innerNum,
-                                          s=s,
-                                          m=m)
-
-                plotSaveDir = baseDir+specificDirName +'/'
-                createDirectory(plotSaveDir)
-                doProject = MyFinalArcface(baseDir=baseDir,
-                                           modelPlotSaveDir=plotSaveDir,
-                                           lossMethod=whichLoss,
-                                           innerNum=innerNum,
-                                           s=s,
-                                           m=m
-                                           )
-
-                startTrain = doProject.START_TRN_VAL(iterNum=100)
-                torch.save(doProject,plotSaveDir+'models.pth')
+                doProject.trainAndSaveSVC()
+    ###################SVC TRAIN###################################
+    ###################SVC TRAIN###################################
+    ###################SVC TRAIN###################################
 
 
-
+    #
+    # #######################DNN TRAIN #############################
+    # #######################DNN TRAIN #############################
+    # #######################DNN TRAIN #############################
+    # baseDir = '/home/a286winteriscoming/Downloads/FinalHomwork/'
+    # whichModel = 'simpleDNN'
+    # optimLst = ['adam','sgd','adamw']
+    # innerNumLst = [64,128,256]
+    # lossLst = ['weightFocal','vanillaFocal','normalCE']
+    #
+    #
+    # for optim in optimLst:
+    #     for innerNum in innerNumLst:
+    #         for whichLoss in lossLst:
+    #             specificDirName = mk_name(dir='DNN/',
+    #                                       optim=optim,
+    #                                       innerNum=innerNum,
+    #                                       loss=whichLoss)
+    #
+    #             plotSaveDir = baseDir+specificDirName +'/'
+    #             createDirectory(plotSaveDir)
+    #             doProject = MyFinalprojectPredictor(baseDir=baseDir,
+    #                                                 plotSaveDir=plotSaveDir,
+    #                                                 whichModel=whichModel,
+    #                                                 innerNum=innerNum,
+    #                                                 optim=optim,
+    #                                                 whichLoss=whichLoss)
+    #
+    #             startTrain = doProject.START_TRN_VAL(iterNum=100)
+    #             torch.save(doProject,plotSaveDir+'models.pth')
+    # #######################DNN TRAIN #############################
+    # #######################DNN TRAIN #############################
+    # #######################DNN TRAIN #############################
+    #
+    #
+    # #######################Arcface TRAIN ########################
+    # #######################Arcface TRAIN ########################
+    # #######################Arcface TRAIN ########################
+    #
+    # baseDir = '/home/a286winteriscoming/Downloads/FinalHomwork/'
+    # whichModel = 'simpleDNN'
+    # optim = 'adam'
+    # innerNumLst = [64,128,256]
+    # sLst = [16,32,64]
+    # mLst = [0.4,0.5,0.6]
+    # whichLoss = 'normalCE'
+    #
+    # for innerNum in innerNumLst:
+    #     for s in sLst:
+    #         for m in mLst:
+    #             specificDirName = mk_name(dir='arcface/',
+    #                                       innerNum=innerNum,
+    #                                       s=s,
+    #                                       m=m)
+    #
+    #             plotSaveDir = baseDir+specificDirName +'/'
+    #             createDirectory(plotSaveDir)
+    #             doProject = MyFinalArcface(baseDir=baseDir,
+    #                                        modelPlotSaveDir=plotSaveDir,
+    #                                        lossMethod=whichLoss,
+    #                                        innerNum=innerNum,
+    #                                        s=s,
+    #                                        m=m
+    #                                        )
+    #
+    #             startTrain = doProject.START_TRN_VAL(iterNum=100)
+    #             torch.save(doProject,plotSaveDir+'models.pth')
+    #
+    #
+    # #######################Arcface TRAIN ########################
+    # #######################Arcface TRAIN ########################
+    # #######################Arcface TRAIN ########################
 
 
 
