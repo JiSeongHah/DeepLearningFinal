@@ -957,8 +957,8 @@ if __name__ == '__main__':
                                                     whichLoss=whichLoss,
                                                     dataScale=False)
 
-                startTrain = doProject.START_TRN_VAL(iterNum=100)
-                torch.save(doProject,plotSaveDir+'models.pt')
+                startTrain = doProject.START_TRN_VAL(iterNum=1000)
+                torch.save(doProject,plotSaveDir+'models.pth')
     #######################DNN TRAIN #############################
     #######################DNN TRAIN #############################
     #######################DNN TRAIN #############################

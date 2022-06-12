@@ -994,7 +994,7 @@ if __name__ == '__main__':
                                            m=m
                                            )
 
-                startTrain = doProject.START_TRN_VAL(iterNum=100)
+                startTrain = doProject.START_TRN_VAL(iterNum=1000)
                 torch.save(doProject,plotSaveDir+'models.pth')
 
 

@@ -957,50 +957,50 @@ if __name__ == '__main__':
                                                     whichLoss=whichLoss,
                                                     dataScale=True)
 
-                startTrain = doProject.START_TRN_VAL(iterNum=100)
-                torch.save(doProject,plotSaveDir+'models.pt')
+                startTrain = doProject.START_TRN_VAL(iterNum=1000)
+                torch.save(doProject,plotSaveDir+'models.pth')
     #######################DNN TRAIN #############################
     #######################DNN TRAIN #############################
     #######################DNN TRAIN #############################
 
-
-    #######################Arcface TRAIN ########################
-    #######################Arcface TRAIN ########################
-    #######################Arcface TRAIN ########################
-
-    baseDir = '/home/a286winteriscoming/Downloads/FinalHomwork/'
-    whichModel = 'simpleDNN'
-    optim = 'adam'
-    innerNumLst = [64,128,256]
-    sLst = [16,32,64]
-    mLst = [0.4,0.5,0.6]
-    whichLoss = 'normalCE'
-
-    for innerNum in innerNumLst:
-        for s in sLst:
-            for m in mLst:
-                specificDirName = mk_name(dir='arcface/',
-                                          innerNum=innerNum,
-                                          s=s,
-                                          m=m)
-
-                plotSaveDir = baseDir+specificDirName +'/'
-                createDirectory(plotSaveDir)
-                doProject = MyFinalArcface(baseDir=baseDir,
-                                           modelPlotSaveDir=plotSaveDir,
-                                           lossMethod=whichLoss,
-                                           innerNum=innerNum,
-                                           s=s,
-                                           m=m
-                                           )
-
-                startTrain = doProject.START_TRN_VAL(iterNum=100)
-                torch.save(doProject,plotSaveDir+'models.pt')
-
-
-    #######################Arcface TRAIN ########################
-    #######################Arcface TRAIN ########################
-    #######################Arcface TRAIN ########################
+    #
+    # #######################Arcface TRAIN ########################
+    # #######################Arcface TRAIN ########################
+    # #######################Arcface TRAIN ########################
+    #
+    # baseDir = '/home/a286winteriscoming/Downloads/FinalHomwork/'
+    # whichModel = 'simpleDNN'
+    # optim = 'adam'
+    # innerNumLst = [64,128,256]
+    # sLst = [16,32,64]
+    # mLst = [0.4,0.5,0.6]
+    # whichLoss = 'normalCE'
+    #
+    # for innerNum in innerNumLst:
+    #     for s in sLst:
+    #         for m in mLst:
+    #             specificDirName = mk_name(dir='arcface/',
+    #                                       innerNum=innerNum,
+    #                                       s=s,
+    #                                       m=m)
+    #
+    #             plotSaveDir = baseDir+specificDirName +'/'
+    #             createDirectory(plotSaveDir)
+    #             doProject = MyFinalArcface(baseDir=baseDir,
+    #                                        modelPlotSaveDir=plotSaveDir,
+    #                                        lossMethod=whichLoss,
+    #                                        innerNum=innerNum,
+    #                                        s=s,
+    #                                        m=m
+    #                                        )
+    #
+    #             startTrain = doProject.START_TRN_VAL(iterNum=100)
+    #             torch.save(doProject,plotSaveDir+'models.pt')
+    #
+    #
+    # #######################Arcface TRAIN ########################
+    # #######################Arcface TRAIN ########################
+    # #######################Arcface TRAIN ########################
 
 
 
