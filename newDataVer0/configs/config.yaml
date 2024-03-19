@@ -1,4 +1,4 @@
 data_down_path : ./data_download_path/
-data_type : cifar10
+data_type : mnist
 label_class : 3
 do_flatten: True
