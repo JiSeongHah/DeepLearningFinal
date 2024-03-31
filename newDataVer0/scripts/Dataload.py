@@ -4,15 +4,7 @@ from pprint import pprint
 from torchvision import datasets,transforms
 import torch
 
-def readConfig(yaml_path):
-    
-    with open(yaml_path) as f:
-        loadedConfig = yaml.load(f, Loader=yaml.FullLoader)
-    
-    print('loaded config is :')
-    pprint(loadedConfig)    
-    
-    return loadedConfig
+
 
 
 
@@ -87,12 +79,16 @@ class myNewDataset(torch.utils.data.Dataset):
 
 
     
-yamlPath = './config.yaml'
+# yamlPath = '.configs/config.yaml'
 
-loadedYaml = readConfig(yamlPath)
+# loadedYaml = readConfig(yamlPath)
+# print(os.getcwd())
+# lst = os.listdir(os.getcwd())
 
-testDataset = myNewDataset(configs=loadedYaml,isTrain=True)
-import time
-for i in testDataset:
-    print(i[0].size(),i[1])
-    time.sleep(1)
+# for i in lst:
+#     print(i)
+# testDataset = myNewDataset(configs=loadedYaml,isTrain=True)
+# import time
+# for i in testDataset:
+#     print(i[0].size(),i[1])
+#     time.sleep(1)
