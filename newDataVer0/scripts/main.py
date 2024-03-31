@@ -7,17 +7,21 @@ from shutil import copytree, rmtree
 print(sys.path)
 from pprint import pprint
 import yaml
-    
-
+from mainloop import MainLoop
+from datetime import datetime
 
 
 class runLoop():
     
-    def __init__(self,configPath) -> None:
+    def __init__(self,configPath,savePath) -> None:
         
         self.configPath = configPath
+        
+        now = datetime.now()
+        self.savePath = os.path.join(savePath,str(round(now.timestamp())))
+        os.makedirs(self.savePath)
        
-        loadedConfig = self.readConfig(self.configPath)
+        self.loadedConfig = self.readConfig(self.configPath)
         
     def copySaveResult(resultPath,savePath):
         
@@ -40,7 +44,7 @@ class runLoop():
             raise Exception
             
         
-    def readConfig(yaml_path):
+    def readConfig(self,yaml_path):
         print('loading config...')
         with open(yaml_path) as f:
             loadedConfig = yaml.load(f, Loader=yaml.FullLoader)
@@ -51,15 +55,29 @@ class runLoop():
         
         return loadedConfig
     
-    def saveConfig(yaml_path,loadedConfig):
+    def saveConfig(self,yaml_path,configs):
         print('saving configs...')
         
-        with open(os.path.join(yaml_path,'config.yaml'), 'w') as f:
-            yaml.dump(loadedConfig, f)
+        with open(os.path.join(yaml_path,'resultConfig.yaml'), 'w') as f:
+            yaml.dump(configs, f)
             
         print('saving configs complete!!')
             
-    def run(self):
+    def run(self,doTestOnly):
+        
+        MAINLOOP = MainLoop(
+            config= self.loadedConfig,
+            doTestOnly=doTestOnly
+        )
+        
+        
+        resultConfig = MAINLOOP.runMainLoop()
+        
+        configSavePath = os.path.join(self.savePath,'configs/')
+        os.makedirs(configSavePath)
+        self.saveConfig(yaml_path = configSavePath,configs= resultConfig)
+        
+        print('all complete!!!')
         
         
         
@@ -70,7 +88,11 @@ if __name__ == '__main__':
     
     configPath = '../configs/config.yaml'
     
-    MAIN = runLoop(configPath)
+    savePath = './history/'
+    
+    MAIN = runLoop(configPath,savePath=savePath)
+    
+    MAIN.run(doTestOnly=False)
     
     
     

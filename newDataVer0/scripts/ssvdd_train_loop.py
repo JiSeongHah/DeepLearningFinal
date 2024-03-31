@@ -21,15 +21,17 @@ class sSVDDLoop():
             x_train.append(eachData[0])
             y_train.append(eachData[1])
             
-        x_train = np.stack(x_train)
-        y_train = np.stack(y_train)
+        x_train = np.stack(x_train)[:1000]
+        
+        y_train = np.stack(y_train)[:1000].reshape(-1,1)
+        
         
         x_train = x_train + np.random.randint(0,256,(x_train.shape))
         
-        whichLabelAbnormal = self.config['whichLabelAbnormal']
+        whichLabelAbnormal = self.config['which_label_abnormal']
         y_train = np.where(y_train==whichLabelAbnormal,1,-1)
         
-        iter= self.confg['ssvdd_iter']
+        iter= self.config['ssvdd_iter']
         C = self.config['ssvdd_C']
         d = self.config['ssvdd_d']
         eta = self.config['ssvdd_eta']
