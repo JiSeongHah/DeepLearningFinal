@@ -17,9 +17,21 @@ class sSVDDLoop():
         x_train = []
         y_train = []
         
+        maxNum = 100
+        flgDict= {}
         for eachData in dataSet:
-            x_train.append(eachData[0])
-            y_train.append(eachData[1])
+            if eachData[1] not in flgDict.keys():
+                flgDict[eachData[1]] = 1
+                x_train.append(eachData[0])
+                y_train.append(eachData[1])
+            else:
+                if flgDict[eachData[1]] >= maxNum:
+                    print(f'appending label : {eachData[1]} reached maxNum : {maxNum}')
+                    continue
+                else:
+                    flgDict[eachData[1]] += 1
+                    x_train.append(eachData[0])
+                    y_train.append(eachData[1])
             
         x_train = np.stack(x_train)[:1000]
         
@@ -78,15 +90,15 @@ class sSVDDLoop():
         
     def saveModel(self,trainResult):
         
-        saveDir = self.config['ssvdd_save_load_path']
+        modelSavePath = self.config['modelSavePath']
         
         try:
-            os.makedirs(saveDir)
+            os.makedirs(modelSavePath,exist_ok=True)
             print('making save directory complete')
         except:
             raise Exception
         
-        with open(os.path.join(saveDir,'ssvddTrainResult.pkl'), 'wb') as f:
+        with open(os.path.join(modelSavePath,'ssvddTrainResult.pkl'), 'wb') as f:
             pickle.dump(trainResult, f)
             
         print(f'saving trained model complete')
@@ -96,7 +108,7 @@ class sSVDDLoop():
         pass
     
     def load_model(self):
-        model_load_path =  self.config['ssvdd_save_load_path']
+        model_load_path =  self.config['modelSavePath']
         
         with open(os.path.join(model_load_path,'ssvddTrainResult.pkl'), 'rb') as f:
             loadedDict = pickle.load(f)
@@ -109,16 +121,28 @@ class sSVDDLoop():
         x_test = []
         y_test = []
         
+        maxNum = 100  
+        flgDict= {}
         for eachData in dataSet:
-            x_test.append(eachData[0])
-            y_test.append(eachData[1])
+            if eachData[1] not in flgDict.keys():
+                flgDict[eachData[1]] = 1
+                x_test.append(eachData[0])
+                y_test.append(eachData[1])
+            else:
+                if flgDict[eachData[1]] >= maxNum:
+                    print(f'appending label : {eachData[1]} reached maxNum : {maxNum}')
+                    continue
+                else:
+                    flgDict[eachData[1]] += 1
+                    x_test.append(eachData[0])
+                    y_test.append(eachData[1])
             
         x_test = np.stack(x_test)
         y_test = np.stack(y_test)
         
         x_test = x_test + np.random.randint(0,256,(x_test.shape))
         
-        whichLabelAbnormal = self.config['whichLabelAbnormal']
+        whichLabelAbnormal = self.config['which_label_abnormal']
         y_test = np.where(y_test==whichLabelAbnormal,1,-1)
         
         

@@ -85,17 +85,17 @@ class MainLoop():
         
         self.config['trainResult'] = {}
         
-        self.config['trainResult']['truePos'] = tp
-        self.config['trainResult']['trueNeg'] = tn
-        self.config['trainResult']['falsePos'] = fp
-        self.config['trainResult']['falseNeg'] = fn
+        self.config['trainResult']['truePos'] = str(tp)
+        self.config['trainResult']['trueNeg'] = str(tn)
+        self.config['trainResult']['falsePos'] = str(fp)
+        self.config['trainResult']['falseNeg'] = str(fn)
         
-        self.config['trainResult']['precision'] = precisionScore
-        self.config['trainResult']['recall'] = recallScore
-        self.config['trainResult']['f1'] = f1Score
+        self.config['trainResult']['precision'] = str(precisionScore)
+        self.config['trainResult']['recall'] = str(recallScore)
+        self.config['trainResult']['f1'] = str(f1Score)
         
-        self.config['trainResult']['averagePrecision'] = averagePrecision
-        self.config['trainResult']['rocAuc'] = rocAuc
+        self.config['trainResult']['averagePrecision'] = str(averagePrecision)
+        self.config['trainResult']['rocAuc'] = str(rocAuc)
         
         self.config['trainResult']['time'] = datetime.now()
         
@@ -116,7 +116,7 @@ class MainLoop():
             
         loadedModel = model.load_model()
         
-        testResult = runTest(dataSet=testDataSet,
+        testResult = model.runTest(dataSet=testDataSet,
                             loadedModel=loadedModel)
             
         print('test complete')
@@ -154,17 +154,17 @@ class MainLoop():
         
         self.config['testResult'] = {}
         
-        self.config['testResult']['truePos'] = tp
-        self.config['testResult']['trueNeg'] = tn
-        self.config['testResult']['falsePos'] = fp
-        self.config['testResult']['falseNeg'] = fn
+        self.config['testResult']['truePos'] = str(tp)
+        self.config['testResult']['trueNeg'] = str(tn)
+        self.config['testResult']['falsePos'] = str(fp)
+        self.config['testResult']['falseNeg'] = str(fn)
         
-        self.config['testResult']['precision'] = precisionScore
-        self.config['testResult']['recall'] = recallScore
-        self.config['testResult']['f1'] = f1Score
+        self.config['testResult']['precision'] = str(precisionScore)
+        self.config['testResult']['recall'] = str(recallScore)
+        self.config['testResult']['f1'] = str(f1Score)
         
-        self.config['testResult']['averagePrecision'] = averagePrecision
-        self.config['testResult']['rocAuc'] = rocAuc
+        self.config['testResult']['averagePrecision'] = str(averagePrecision)
+        self.config['testResult']['rocAuc'] = str(rocAuc)
         
         self.config['testResult']['time'] = datetime.now()
         

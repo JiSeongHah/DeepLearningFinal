@@ -20,8 +20,10 @@ class runLoop():
         now = datetime.now()
         self.savePath = os.path.join(savePath,str(round(now.timestamp())))
         os.makedirs(self.savePath)
-       
+        
         self.loadedConfig = self.readConfig(self.configPath)
+        
+        self.loadedConfig['modelSavePath'] = self.savePath
         
     def copySaveResult(resultPath,savePath):
         
