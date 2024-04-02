@@ -1,7 +1,7 @@
 import os
 import numpy as np
-from SSVDD.ssvdd_train import ssvdd_train
-from SSVDD.ssvdd_test import ssvdd_test
+from mySSVDD.ssvdd_train import ssvdd_train
+from mySSVDD.ssvdd_test import ssvdd_test
 import pickle
 
 

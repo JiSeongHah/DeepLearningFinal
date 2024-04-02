@@ -1,7 +1,7 @@
 import numpy as np
 from ssvdd_train_loop import sSVDDLoop
-from SSVDD.ssvdd_train import ssvdd_train
-from SSVDD.ssvdd_test import ssvdd_test
+from mySSVDD.ssvdd_train import ssvdd_train
+from mySSVDD.ssvdd_test import ssvdd_test
 from Dataload import myNewDataset
 from sklearn.metrics import confusion_matrix ,roc_auc_score, average_precision_score, f1_score,precision_score,recall_score
 from datetime import datetime

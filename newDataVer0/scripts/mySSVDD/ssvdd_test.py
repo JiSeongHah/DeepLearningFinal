@@ -1,5 +1,5 @@
 import numpy as np
-from SSVDD.baseSVDD.src.BaseSVDD import BaseSVDD
+from mySSVDD.BaseSVDD import BaseSVDD
 from sklearn.metrics.pairwise import rbf_kernel
 
 
