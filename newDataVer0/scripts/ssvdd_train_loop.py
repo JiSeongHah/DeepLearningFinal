@@ -17,7 +17,7 @@ class sSVDDLoop():
         x_train = []
         y_train = []
         
-        maxNum = 100
+        maxNum = 500
         flgDict= {}
         for eachData in dataSet:
             if eachData[1] not in flgDict.keys():
@@ -33,12 +33,12 @@ class sSVDDLoop():
                     x_train.append(eachData[0])
                     y_train.append(eachData[1])
             
-        x_train = np.stack(x_train)[:1000]
+        x_train = np.stack(x_train)
         
-        y_train = np.stack(y_train)[:1000].reshape(-1,1)
+        y_train = np.stack(y_train).reshape(-1,1)
         
         
-        x_train = x_train + np.random.randint(0,256,(x_train.shape))
+        x_train = x_train + np.round(0.1 * np.random.randint(0,256,(x_train.shape)))
         
         whichLabelAbnormal = self.config['which_label_abnormal']
         y_train = np.where(y_train==whichLabelAbnormal,1,-1)
@@ -121,7 +121,7 @@ class sSVDDLoop():
         x_test = []
         y_test = []
         
-        maxNum = 100  
+        maxNum = 1000
         flgDict= {}
         for eachData in dataSet:
             if eachData[1] not in flgDict.keys():
@@ -140,10 +140,12 @@ class sSVDDLoop():
         x_test = np.stack(x_test)
         y_test = np.stack(y_test)
         
-        x_test = x_test + np.random.randint(0,256,(x_test.shape))
+        # x_test = x_test + np.random.randint(0,256,(x_test.shape))
+        x_test = x_test 
         
         whichLabelAbnormal = self.config['which_label_abnormal']
         y_test = np.where(y_test==whichLabelAbnormal,1,-1)
+        
         
         
         ssvdd_npt = loadedModel['ssvdd_npt']
