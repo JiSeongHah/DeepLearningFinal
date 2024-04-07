@@ -290,8 +290,7 @@ class vanillaDsvddLoop():
             drop_last=False
         )
         
-        
-        
+    
         totalScoreLstVal = []
         totalLabelLstVal  =[]
          
@@ -310,31 +309,22 @@ class vanillaDsvddLoop():
             
             for idx,(totalBInput) in enumerate(theDloader):
                 
-                bInput = totalBInput['input']
+                bInput, bLabel = totalBInput[0], totalBInput[1]
                 
                 self.Modeloptim.zero_grad()
                                 
-                bOutput = self.SVDD_model(bInput.float().to(self.device)).cpu()
+                bOutput = self.DSVDD_model(bInput.float().to(self.device)).cpu()
                 
-                if self.transformer == 'naive':
-                    eachScore = self.calMSELoss(bOutput,self.centre.repeat(bOutput.size(0),1,1),reduction='none')
-                    if useMax == True:
-                        totalScoreLstVal.append(torch.amax(eachScore,dim=(1,2)))
-                    else:
-                        totalScoreLstVal.append(torch.mean(eachScore,dim=(1,2)))
-                        print(f'totalScoreLstV size : {totalScoreLstVal[-1].size()}')
+                eachScore = self.calMSELoss(bOutput,self.centre.repeat(bOutput.size(0),1),reduction='none')
+                
+                useMax=  self.config['useMax_when_val']
+                if useMax == True:
+                    totalScoreLstVal.append(torch.amax(eachScore,dim=(1,2)))
                 else:
-                    eachScore = self.calMSELoss(bOutput,self.centre.repeat(bOutput.size(0),1,1),reduction='none')
-                    if useMax == True:
-                        totalScoreLstVal.append(torch.amax(eachScore,dim=(1,2)))
-                    else:
-                        totalScoreLstVal.append(torch.mean(eachScore,dim=(1,2)))
-                        print(f'totalScoreLstV size : {totalScoreLstVal[-1].size()}')
-                
-                
+                    totalScoreLstVal.append(torch.mean(eachScore,dim=(1,2)))
+                    
                 totalLabelLstVal.append(bLabel)
-                
-                
+                              
         totalLabelTrue, totalScores = torch.cat(totalLabelLstVal).numpy(), torch.cat(totalScoreLstVal).numpy()
         
         print(f'shape of label : {totalLabelTrue.shape}')
@@ -369,9 +359,6 @@ class vanillaDsvddLoop():
         fRealOnlyLst = []
         fRealOnlyOnlyLst = []
         
-        
-        
-
         resultPerThresholdLst = []
         resultPerThresholdLstRealOnly = []
 
