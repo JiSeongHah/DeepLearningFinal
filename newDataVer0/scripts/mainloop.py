@@ -1,5 +1,6 @@
 import numpy as np
 from ssvdd_train_loop import sSVDDLoop
+from ocsvm_loop import ocsvmLoop
 from mySSVDD.ssvdd_train import ssvdd_train
 from mySSVDD.ssvdd_test import ssvdd_test
 from Dataload import myNewDataset
@@ -45,6 +46,9 @@ class MainLoop():
         if whichModel == 'ssvdd':
             
             model = sSVDDLoop(config=self.config)
+        
+        elif whichModel == 'ocsvm':
+            model =ocsvmLoop(config=self.config)
             
         trainResult = model.runTrain(dataSet=trainDataSet)
         
@@ -65,7 +69,6 @@ class MainLoop():
         
         tn, fp, fn, tp = confusion_matrix(y_pred=y_pred,
                                            y_true=y_train).ravel()
-        
         
         
         precisionScore= precision_score(y_pred=y_pred,
@@ -111,8 +114,10 @@ class MainLoop():
         whichModel = self.config['which_model']
         
         if whichModel == 'ssvdd':
+            model= sSVDDLoop(config=self.config)
             
-            model = sSVDDLoop(config=self.config)
+        elif whichModel == 'ocsvm':
+            model= ocsvmLoop(config=self.config)
             
         loadedModel = model.load_model()
         

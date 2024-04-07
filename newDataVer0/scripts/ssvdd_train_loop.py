@@ -17,7 +17,7 @@ class sSVDDLoop():
         x_train = []
         y_train = []
         
-        maxNum = 500
+        maxNum = 1000
         flgDict= {}
         for eachData in dataSet:
             if eachData[1] not in flgDict.keys():
@@ -35,10 +35,18 @@ class sSVDDLoop():
             
         x_train = np.stack(x_train)
         
+        x_train_mean = np.mean(x_train)
+        x_train_std = np.std(x_train,ddof=1)
+        
+        print(f'x_train_mena is : {x_train_mean} while x_train_std is : {x_train_std}')
+        
+        x_train = (x_train-x_train_mean)/x_train_std
+        
         y_train = np.stack(y_train).reshape(-1,1)
         
         
-        x_train = x_train + np.round(0.1 * np.random.randint(0,256,(x_train.shape)))
+        # x_train = x_train + 0.1 * np.random.randn(*x_train.shape)
+        x_train = x_train + 0.1 * np.random.randn(*x_train.shape)
         
         whichLabelAbnormal = self.config['which_label_abnormal']
         y_train = np.where(y_train==whichLabelAbnormal,1,-1)
@@ -141,16 +149,18 @@ class sSVDDLoop():
         y_test = np.stack(y_test)
         
         # x_test = x_test + np.random.randint(0,256,(x_test.shape))
-        x_test = x_test 
+        x_test = (x_test-0.131)/0.309
+         
         
         whichLabelAbnormal = self.config['which_label_abnormal']
         y_test = np.where(y_test==whichLabelAbnormal,1,-1)
         
-        
-        
         ssvdd_npt = loadedModel['ssvdd_npt']
         ssvdd_models= loadedModel['ssvdd_models']
         ssvdd_Q = loadedModel['ssvdd_Q']
+        
+        for i in range(len(ssvdd_Q)):
+            print(ssvdd_Q[i].shape)
         
         y_pred,y_anomaly_score = ssvdd_test(
                                             x_test,
