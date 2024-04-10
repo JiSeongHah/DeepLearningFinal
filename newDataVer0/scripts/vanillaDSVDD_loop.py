@@ -90,10 +90,10 @@ class vanillaDsvddLoop():
         self.saveWeightAE(iterNum=self.config['preAE_epoch'])
         self.transferAEtoMainModel()
         
-        centre= self.setCentre(self,normalDataSet=(x_train,y_train))
+        centre= self.setCentre(normalDataSet=(x_train,y_train))
         
         for eachEpoch in range(self.config['mainModel_epoch']):
-            self.trainMainModel(aeTrainDataSet=(copy.deepcopy(x_train),copy.deepcopy(y_train)))
+            self.trainMainModel(mainModelTrainDataSet=(copy.deepcopy(x_train),copy.deepcopy(y_train)))
             self.trainModelEnd()
             self.validationStep(validationDataset= (x_val,y_val))
             self.validationStepEnd()
@@ -199,7 +199,7 @@ class vanillaDsvddLoop():
         preAeSavePath = os.path.join(self.config['modelSavePath'],'models/pre_ae')
         os.makedirs(preAeSavePath,exist_ok=True)
         
-        torch.save(self.DSVDD_preAE.state_dict(), os.path.join(preAeSavePath,'ae_',str(iterNum))+'.pt')
+        torch.save(self.DSVDD_preAE.state_dict(), os.path.join(preAeSavePath,'ae_'+str(iterNum))+'.pt')
         
         print('saving AE weight complete')
         
@@ -209,7 +209,7 @@ class vanillaDsvddLoop():
         mainModelSavePath = os.path.join(self.config['modelSavePath'],'models/main_model')
         os.makedirs(mainModelSavePath,exist_ok=True)
         
-        torch.save(self.DSVDD_model.state_dict(),os.path.join(mainModelSavePath,'mainModel_',str(iterNum))+'.pt')
+        torch.save(self.DSVDD_model.state_dict(),os.path.join(mainModelSavePath,'mainModel_'+str(iterNum))+'.pt')
         
         print('saving MainModel weight complete')
         
@@ -260,7 +260,9 @@ class vanillaDsvddLoop():
         self.DSVDD_preAE.to('cpu')
         
         cSave = c.numpy()
-        np.save(os.path.join(self.config['mainmodel_save_load_path'],'cSave.npy'),cSave)
+        cSavePath = os.path.join(self.config['modelSavePath'],'models/center')
+        os.makedirs(cSavePath,exist_ok=True)
+        np.save(os.path.join(cSavePath,'cSave.npy'),cSave)
         tqdm._instances.clear()
         
         self.centre = c
@@ -321,9 +323,9 @@ class vanillaDsvddLoop():
         
         self.modelLossLstTrnTmp.clear()
         
-    def validationStep(self,validationDataSet,printAll=True):
+    def validationStep(self,validationDataset,printAll=True):
         
-        x_val,y_val = validationDataSet[0], validationDataSet[1]
+        x_val,y_val = validationDataset[0], validationDataset[1]
         
         valTensorDataSet = TensorDataset(torch.tensor(x_val),torch.tensor(y_val))
         
@@ -467,7 +469,8 @@ class vanillaDsvddLoop():
         whichLabelAbnormal = self.config['which_label_abnormal']
         y_test = np.where(y_test==whichLabelAbnormal,1,0)
         
-        self.centre = np.load(os.path.join(self.config['mainmodel_save_load_path'],'cSave.npy'))
+        cSavePath = os.path.join(self.config['modelSavePath'],'models/center')
+        self.centre = np.load(os.path.join(cSavePath,'cSave.npy'))
         
         self.testStep(testDataset= (x_test,y_test))
         self.testStepEnd()
@@ -591,7 +594,7 @@ class vanillaDsvddLoop():
         print(f'loading AE weight start...')
         preAeSavePath = os.path.join(self.config['modelSavePath'],'models/pre_ae')
         
-        loadedAeWeight = torch.load(os.path.join(preAeSavePath,'ae_',str(iterNum))+'.pt')
+        loadedAeWeight = torch.load(os.path.join(preAeSavePath,'ae_'+str(iterNum))+'.pt')
         
         missing = DSVDD_preAE.load_state_dict(loadedAeWeight)
         
@@ -608,7 +611,7 @@ class vanillaDsvddLoop():
         print(f'loading main model weight start...')
         mainModelSavePath = os.path.join(self.config['modelSavePath'],'models/main_model')
         
-        loadedMainModelWight = torch.load(os.path.join(mainModelSavePath,'mainModel_',str(iterNum))+'.pt')
+        loadedMainModelWight = torch.load(os.path.join(mainModelSavePath,'mainModel_'+str(iterNum))+'.pt')
         missing = DSVDD_model.load_state_dict(loadedMainModelWight)
         print('saving MainModel weight complete!')
         
