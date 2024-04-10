@@ -109,15 +109,35 @@ class MainLoop():
             self.config['trainResult']['time'] = datetime.now()
             
         elif whichModel == 'vanilla_dsvdd':
+            from pprint import pprint
+            for i in range(10):
+                pprint(trainResult)
+                print('')
+                print('')
+                print('')
+            self.config['trainResult'] = {}
+            self.config['trainResult']['ae_trian_loss'] = {f'epoch_{idx}' : str(i) for idx,i in enumerate(trainResult['ae_train_loss'])}
+            self.config['trainResult']['model_train_loss'] = {f'epoch_{idx}': str(i) for idx,i in enumerate(trainResult['model_train_loss'])}
             
-            self.config['trainResult']['ae_trian_loss'] = trainResult['ae_train_loss']
-            self.config['trainResult']['model_train_loss'] = trainResult['model_train_loss']
+            self.config['trainResult']['average_precision'] = {f'epoch_{idx}': str(i) for idx,i in enumerate(trainResult['val_average_precision'])}
+            self.config['trainResult']['roc_auc'] = {f'epoch_{idx}' : str(i) for idx,i in enumerate(trainResult['val_roc_auc'])}
             
-            self.config['trainResult']['average_precision'] = trainResult['val_average_precision']
-            self.config['trainResult']['roc_auc'] = trainResult['val_roc_auc']
+            # self.config['trainResult']['confusion'] = trainResult['val_f1'][-1]
             
-            self.config['trainResult']['confusion'] = trainResult['val_f1'][-1]
-            
+            confusions = trainResult['val_f1']
+            self.config['trainResult']['val_result_changes'] = {}
+            for idx,i in enumerate(confusions):
+                self.config['trainResult']['val_result_changes'][f'epoch_{idx}'] = {
+                    'TN': str(i[1]),
+                    'FP': str(i[2]),
+                    'FN': str(i[3]),
+                    'TP': str(i[4]),
+                    'precision': str(i[5]),
+                    'recall': str(i[6]),
+                    'f1_score': str(i[7]),
+                }
+                
+
             self.config['trainResult']['time'] = datetime.now()
             
     def runTestLoop(self):
@@ -196,11 +216,23 @@ class MainLoop():
             self.config['testResult']['time'] = datetime.now()
             
         elif whichModel == 'vanilla_dsvdd':
+            self.config['testResult'] = {}
+            self.config['testResult']['average_precision'] = str(testResult['test_average_precision'][0])
+            self.config['testResult']['roc_auc'] = str(testResult['test_roc_auc'][0])
             
-            self.config['testResult']['average_precision'] = testResult['test_average_precision']
-            self.config['testResult']['roc_auc'] = testResult['test_roc_auc']
-            self.config['testResult']['f1'] = testResult['test_f1']
+            f_scores = testResult['test_f1'][0]
+            self.config['testResult']['threshold'] = str(f_scores[0])
+            self.config['testResult']['TN'] = str(f_scores[1])
+            self.config['testResult']['FP'] = str(f_scores[2])
+            self.config['testResult']['FN'] = str(f_scores[3])
+            self.config['testResult']['TP'] = str(f_scores[4])
+            self.config['testResult']['precision'] = str(f_scores[5])
+            self.config['testResult']['recall'] = str(f_scores[6])
+            self.config['testResult']['f1_score'] = str(f_scores[7])
             self.config['testResult']['time'] = datetime.now()
+            # from pprint import pprint
+            # for i in range(10):
+            #     pprint(self.config['testResult'])
         
         
             

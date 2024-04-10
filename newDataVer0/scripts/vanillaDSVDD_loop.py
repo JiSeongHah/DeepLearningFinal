@@ -183,11 +183,14 @@ class vanillaDsvddLoop():
         
         self.AElossLstTrn.append(np.mean(self.AElossLstTrnTmp))
         
+        plotSavePath = os.path.join(self.config['modelSavePath'],'plots')
+        os.makedirs(plotSavePath,exist_ok=True)
+        
         plt.plot(range(len(self.AElossLstTrn)),self.AElossLstTrn)
         plt.xlabel('Epoch')
         plt.ylabel('Loss')
         plt.title(f'Auto Encoder Train Loss')
-        plt.savefig(os.path.join(self.config['plotSaveDir'],'aeTrainLossPlot.png'),dpi=300)
+        plt.savefig(os.path.join(plotSavePath,'aeTrainLossPlot.png'),dpi=300)
         plt.cla()
         plt.clf()
         plt.close()
@@ -312,18 +315,21 @@ class vanillaDsvddLoop():
         
         self.modelLossLstTrn.append(np.mean(self.modelLossLstTrnTmp))
         
+        plotSavePath = os.path.join(self.config['modelSavePath'],'plots')
+        os.makedirs(plotSavePath,exist_ok=True)
+        
         plt.plot(range(len(self.modelLossLstTrn)),self.modelLossLstTrn)
         plt.xlabel('Epoch')
         plt.ylabel('Loss')
         plt.title(f'DSVDD model Train Loss')
-        plt.savefig(os.path.join(self.config['plotSaveDir'],'mainModelTrainLossPlot.png'),dpi=300)
+        plt.savefig(os.path.join(plotSavePath,'mainModelTrainLossPlot.png'),dpi=300)
         plt.cla()
         plt.clf()
         plt.close()
         
         self.modelLossLstTrnTmp.clear()
         
-    def validationStep(self,validationDataset,printAll=True):
+    def validationStep(self,validationDataset):
         
         x_val,y_val = validationDataset[0], validationDataset[1]
         
@@ -364,9 +370,9 @@ class vanillaDsvddLoop():
                 
                 useMax=  self.config['useMax_when_val']
                 if useMax == True:
-                    totalScoreLstVal.append(torch.amax(eachScore,dim=(1,2)))
+                    totalScoreLstVal.append(torch.amax(eachScore,dim=1))
                 else:
-                    totalScoreLstVal.append(torch.mean(eachScore,dim=(1,2)))
+                    totalScoreLstVal.append(torch.mean(eachScore,dim=1))
                     
                 totalLabelLstVal.append(bLabel)
                               
@@ -399,6 +405,7 @@ class vanillaDsvddLoop():
             fLst.append(f1Score)
             resultPerThresholdLst.append([eachThreshold,tn,fp,fn,tp,precisionScore,recallScore,f1Score])
 
+            printAll = self.config['printAll']
             if printAll ==True:
                 print(resultPerThresholdLst[-1])
 
@@ -416,11 +423,13 @@ class vanillaDsvddLoop():
         
     def validationStepEnd(self):
         
+        plotSavePath = os.path.join(self.config['modelSavePath'],'plots')
+        
         plt.plot(range(len(self.val_averagePrecisionLst)),self.val_averagePrecisionLst)
         plt.xlabel('Epoch')
         plt.ylabel('Average precision')
         plt.title(f'DSVDD model validation average precision')
-        plt.savefig(os.path.join(self.config['plotSaveDir'],'valAveragePrecision.png'),dpi=300)
+        plt.savefig(os.path.join(plotSavePath,'valAveragePrecision.png'),dpi=300)
         plt.cla()
         plt.clf()
         plt.close()
@@ -429,7 +438,7 @@ class vanillaDsvddLoop():
         plt.xlabel('Epoch')
         plt.ylabel('Roc auc')
         plt.title(f'DSVDD model validation roc auc')
-        plt.savefig(os.path.join(self.config['plotSaveDir'],'valRocAuc.png'),dpi=300)
+        plt.savefig(os.path.join(plotSavePath,'valRocAuc.png'),dpi=300)
         plt.cla()
         plt.clf()
         plt.close()
@@ -439,7 +448,7 @@ class vanillaDsvddLoop():
         plt.xlabel('Epoch')
         plt.ylabel('f1 score')
         plt.title(f'DSVDD model validation f1 score')
-        plt.savefig(os.path.join(self.config['plotSaveDir'],'val_f1_score.png'),dpi=300)
+        plt.savefig(os.path.join(plotSavePath,'val_f1_score.png'),dpi=300)
         plt.cla()
         plt.clf()
         plt.close()
@@ -456,6 +465,14 @@ class vanillaDsvddLoop():
         self.DSVDD_model = loadedModel['main_model']
         self.DSVDD_preAE = loadedModel['pre_ae']
         
+        self.Modeloptim = AdamW(self.DSVDD_model.parameters(),
+                              lr =3e-4,
+                              weight_decay=0.5e-6)
+        
+        self.AEoptim = AdamW(self.DSVDD_preAE.parameters(),
+                            lr =3e-4,
+                            weight_decay =0.5e-3)
+        
         x_test = []
         y_test = []
         
@@ -470,7 +487,9 @@ class vanillaDsvddLoop():
         y_test = np.where(y_test==whichLabelAbnormal,1,0)
         
         cSavePath = os.path.join(self.config['modelSavePath'],'models/center')
-        self.centre = np.load(os.path.join(cSavePath,'cSave.npy'))
+        self.centre = torch.tensor(np.load(os.path.join(cSavePath,'cSave.npy')))
+        
+        
         
         self.testStep(testDataset= (x_test,y_test))
         self.testStepEnd()
@@ -483,7 +502,7 @@ class vanillaDsvddLoop():
         
         return save_dict
         
-    def testStep(self,testDataset,printAll=True):
+    def testStep(self,testDataset):
         
         x_test,y_test = testDataset[0], testDataset[1]
         
@@ -519,13 +538,16 @@ class vanillaDsvddLoop():
                                 
                 bOutput = self.DSVDD_model(bInput.float().to(self.device)).cpu()
                 
+                for i in range(10):
+                    print(bOutput.size(),self.centre.shape)
+                
                 eachScore = self.calMSELoss(bOutput,self.centre.repeat(bOutput.size(0),1),reduction='none')
                 
                 useMax=  self.config['useMax_when_val']
                 if useMax == True:
-                    totalScoreLstTest.append(torch.amax(eachScore,dim=(1,2)))
+                    totalScoreLstTest.append(torch.amax(eachScore,dim=1))
                 else:
-                    totalScoreLstTest.append(torch.mean(eachScore,dim=(1,2)))
+                    totalScoreLstTest.append(torch.mean(eachScore,dim=1))
                     
                 totalLabelLstTest.append(bLabel)
                               
@@ -557,7 +579,8 @@ class vanillaDsvddLoop():
             f1Score = f1_score(y_true=totalLabelTrue,y_pred=labelPred)
             fLst.append(f1Score)
             resultPerThresholdLst.append([eachThreshold,tn,fp,fn,tp,precisionScore,recallScore,f1Score])
-
+            
+            printAll = self.config['printAll']
             if printAll ==True:
                 print(resultPerThresholdLst[-1])
 
@@ -577,11 +600,14 @@ class vanillaDsvddLoop():
         
         pass
     
-    def saveModel(trainResult):
+    def saveModel(self,trainResult):
         
         pass
     
     def load_model(self):
+        
+        aeIterNum = self.config['preAE_epoch']
+        mainModelIterNum = self.config['mainModel_epoch']
         
         DSVDD_preAE = naivePreAutoEncoder(
             hDim1=self.config['hDim1'],
@@ -594,7 +620,7 @@ class vanillaDsvddLoop():
         print(f'loading AE weight start...')
         preAeSavePath = os.path.join(self.config['modelSavePath'],'models/pre_ae')
         
-        loadedAeWeight = torch.load(os.path.join(preAeSavePath,'ae_'+str(iterNum))+'.pt')
+        loadedAeWeight = torch.load(os.path.join(preAeSavePath,'ae_'+str(aeIterNum))+'.pt')
         
         missing = DSVDD_preAE.load_state_dict(loadedAeWeight)
         
@@ -611,7 +637,7 @@ class vanillaDsvddLoop():
         print(f'loading main model weight start...')
         mainModelSavePath = os.path.join(self.config['modelSavePath'],'models/main_model')
         
-        loadedMainModelWight = torch.load(os.path.join(mainModelSavePath,'mainModel_'+str(iterNum))+'.pt')
+        loadedMainModelWight = torch.load(os.path.join(mainModelSavePath,'mainModel_'+str(mainModelIterNum))+'.pt')
         missing = DSVDD_model.load_state_dict(loadedMainModelWight)
         print('saving MainModel weight complete!')
         
