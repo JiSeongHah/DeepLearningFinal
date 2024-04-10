@@ -14,6 +14,7 @@ from vanillaDSVDD_model import naiveFCN, naivePreAutoEncoder
 from torch.utils.data import DataLoader
 from sklearn.model_selection import train_test_split
 import copy
+import os
 
 class vanillaDsvddLoop():
     def __init__(self,config) -> None:
@@ -83,22 +84,22 @@ class vanillaDsvddLoop():
         x_train, x_val, y_train, y_val = self.split_trn_val(dataSet)
         
         
-        for eachEpoch in range(len(self.config['preAE_epoch'])):
+        for eachEpoch in range(self.config['preAE_epoch']):
             self.trainPreAE(aeTrainDataSet=(copy.deepcopy(x_train),copy.deepcopy(y_train)))
             self.trainPreAEEnd()
         
-        self.saveWeightAE(iterNum=len(self.config['preAE_epoch']))
+        self.saveWeightAE(iterNum=self.config['preAE_epoch'])
         self.transferAEtoMainModel()
         
         centre= self.setCentre(self,normalDataSet=(x_train,y_train))
         
-        for eachEpoch in range(len(self.config['mainModel_epoch'])):
+        for eachEpoch in range(self.config['mainModel_epoch']):
             self.trainMainModel(aeTrainDataSet=(copy.deepcopy(x_train),copy.deepcopy(y_train)))
             self.trainModelEnd()
             self.validationStep(validationDataset= (x_val,y_val))
             self.validationStepEnd()
             
-        self.saveWeightMainModel(iterNum=len(self.config['mainModel_epoch']))
+        self.saveWeightMainModel(iterNum=self.config['mainModel_epoch'])
         
         save_dict = {
             'ae_train_loss': self.AElossLstTrn,
@@ -127,7 +128,7 @@ class vanillaDsvddLoop():
         y_train_total = np.where(y_train_total==whichLabelAbnormal,1,0)
         
         x_train, x_val, y_train, y_val = train_test_split(
-            x_train_total, y_train_total, test_size=0.1, random_state=42
+            x_train_total, y_train_total, test_size=0.2, random_state=42
         )
         
         return x_train, x_val, y_train, y_val
@@ -435,8 +436,7 @@ class vanillaDsvddLoop():
         plt.close()
         
         
-        
-    def runTest(self,dataSet):
+    def runTest(self,dataSet,loadedModel):
         
         USE_CUDA = torch.cuda.is_available()
         print(USE_CUDA)
@@ -444,21 +444,8 @@ class vanillaDsvddLoop():
         self.device = torch.device('cuda:0' if USE_CUDA else 'cpu')
         print('학습을 진행하는 기기:',self.device)
         
-        self.DSVDD_model = naiveFCN(
-            hDim1=self.config['hDim1'],
-            hDim2=self.config['hDim2'],
-            hDim3=self.config['hDim3'],
-            FVSize=self.config['FVSize'],
-            inputSize=self.config['inputSize']
-        )
-        
-        self.DSVDD_preAE = naivePreAutoEncoder(
-            hDim1=self.config['hDim1'],
-            hDim2=self.config['hDim2'],
-            hDim3=self.config['hDim3'],
-            FVSize=self.config['FVSize'],
-            inputSize=self.config['inputSize']
-        )
+        self.DSVDD_model = loadedModel['main_model']
+        self.DSVDD_preAE = loadedModel['pre_ae']
         
         x_test = []
         y_test = []
@@ -473,9 +460,6 @@ class vanillaDsvddLoop():
         whichLabelAbnormal = self.config['which_label_abnormal']
         y_test = np.where(y_test==whichLabelAbnormal,1,0)
         
-        self.loadWeightAE()
-        self.loadWeightMainModel()
-        
         self.centre = np.load(os.path.join(self.config['mainmodel_save_load_path'],'cSave.npy'))
         
         self.testStep(testDataset= (x_test,y_test))
@@ -489,7 +473,7 @@ class vanillaDsvddLoop():
         
         return save_dict
         
-    def testStep(self,testDataset):
+    def testStep(self,testDataset,printAll=True):
         
         x_test,y_test = testDataset, testDataset
         
@@ -502,9 +486,8 @@ class vanillaDsvddLoop():
             drop_last=False
         )
         
-    
-        totalScoreLstTest = []
-        totalLabelLstTest  =[]
+        totalScoreLstTest= []
+        totalLabelLstTest= []
     
         self.DSVDD_model.to(self.device)
         self.DSVDD_model.eval()
@@ -580,26 +563,43 @@ class vanillaDsvddLoop():
         self.test_rocAucLst.append(rocAucScore)
         self.test_f_lst.append(fMax)
         
-        
-        
-        
     def testStepEnd(self):
         
         pass
-        
-        
-        
     
-    def loadWeightAE(self,iterNum):
+    def saveModel(trainResult):
+        
+        pass
+    
+    def load_model(self):
+        
+        DSVDD_preAE = naivePreAutoEncoder(
+            hDim1=self.config['hDim1'],
+            hDim2=self.config['hDim2'],
+            hDim3=self.config['hDim3'],
+            FVSize=self.config['FVSize'],
+            inputSize=self.config['inputSize']
+        )
+        
         print(f'loading AE weight start...')
         loadedAeWeight = torch.load(os.path.join(self.config['ae_save_load_path'],'ae_',str(iterNum))+'.pt')
-        missing = self.DSVDD_preAE.load_state_dict(loadedAeWeight)
+        missing = DSVDD_preAE.load_state_dict(loadedAeWeight)
         
         print('loading AE weight complete!')
         
+        DSVDD_model = naiveFCN(
+            hDim1=self.config['hDim1'],
+            hDim2=self.config['hDim2'],
+            hDim3=self.config['hDim3'],
+            FVSize=self.config['FVSize'],
+            inputSize=self.config['inputSize']
+        )
         
-    def loadWeightMainModel(self,iterNum):
         print(f'loading main model weight start...')
         loadedMainModelWight = torch.load(os.path.join(self.config['mainmodel_save_load_path'],'ae_',str(iterNum))+'.pt')
-        missing = self.DSVDD_model.load_state_dict(loadedMainModelWight)
+        missing = DSVDD_model.load_state_dict(loadedMainModelWight)
         print('saving MainModel weight complete!')
+        
+        return {'pre_ae':DSVDD_preAE,'main_model':DSVDD_model}
+        
+    
