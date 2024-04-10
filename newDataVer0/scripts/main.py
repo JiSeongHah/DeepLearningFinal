@@ -31,7 +31,6 @@ class runLoop():
             copytree(resultPath,savePath)
             print('saving old hisotry complete')
             
-            
         except:
             raise Exception
         
@@ -82,19 +81,17 @@ class runLoop():
         print('all complete!!!')
         
         
-        
-        
-    
-    
 if __name__ == '__main__':
     
-    configPath = '../configs/config.yaml'
+    for i in range(9):
     
-    savePath = './history/'
-    
-    MAIN = runLoop(configPath,savePath=savePath)
-    
-    MAIN.run(doTestOnly=False)
+        configPath = '../configs/config.yaml'
+        
+        savePath = './history/'
+        
+        MAIN = runLoop(configPath,savePath=savePath)
+        
+        MAIN.run(doTestOnly=False)
     
     
     
