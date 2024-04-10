@@ -1,4 +1,3 @@
-import import_ipynb
 import csv
 import torch
 import numpy as np
@@ -143,7 +142,9 @@ class vanillaDsvddLoop():
         
         x_train, y_train = aeTrainDataSet[0], aeTrainDataSet[1]
         
-        aeTrainTensorDataSet = TensorDataset(x_train,y_train)
+        # y_train = y_train[:,np.newaxis]
+        
+        aeTrainTensorDataSet = TensorDataset(torch.tensor(x_train),torch.tensor(y_train))
         
         self.DSVDD_preAE.to(self.device)
         self.DSVDD_preAE.train()
@@ -195,14 +196,20 @@ class vanillaDsvddLoop():
         
     def saveWeightAE(self,iterNum):
         
-        torch.save(self.DSVDD_preAE.state_dict(), os.path.join(self.config['ae_save_load_path'],'ae_',str(iterNum))+'.pt')
+        preAeSavePath = os.path.join(self.config['modelSavePath'],'models/pre_ae')
+        os.makedirs(preAeSavePath,exist_ok=True)
+        
+        torch.save(self.DSVDD_preAE.state_dict(), os.path.join(preAeSavePath,'ae_',str(iterNum))+'.pt')
         
         print('saving AE weight complete')
         
         
     def saveWeightMainModel(self,iterNum):
         
-        torch.save(self.DSVDD_model.state_dict(),os.path.join(self.config['mainmodel_save_load_path'],'ae_',str(iterNum))+'.pt')
+        mainModelSavePath = os.path.join(self.config['modelSavePath'],'models/main_model')
+        os.makedirs(mainModelSavePath,exist_ok=True)
+        
+        torch.save(self.DSVDD_model.state_dict(),os.path.join(mainModelSavePath,'mainModel_',str(iterNum))+'.pt')
         
         print('saving MainModel weight complete')
         
@@ -217,7 +224,7 @@ class vanillaDsvddLoop():
         
         x_train, y_train = normalDataSet[0], normalDataSet[1]
         
-        aeTrainTensorDataSet = TensorDataset(x_train,y_train)
+        aeTrainTensorDataSet = TensorDataset(torch.tensor(x_train),torch.tensor(y_train))
         
         self.DSVDD_preAE.to(self.device)
         self.DSVDD_preAE.eval()
@@ -265,7 +272,7 @@ class vanillaDsvddLoop():
         
         x_train, y_train = mainModelTrainDataSet[0], mainModelTrainDataSet[1]
         
-        mainModelTrainTensorDataSet = TensorDataset(x_train, y_train)
+        mainModelTrainTensorDataSet = TensorDataset(torch.tensor(x_train), torch.tensor(y_train))
         
         self.DSVDD_preAE.to(self.device)
         self.DSVDD_preAE.eval()
@@ -318,7 +325,7 @@ class vanillaDsvddLoop():
         
         x_val,y_val = validationDataSet[0], validationDataSet[1]
         
-        valTensorDataSet = TensorDataset(x_val,y_val)
+        valTensorDataSet = TensorDataset(torch.tensor(x_val),torch.tensor(y_val))
         
         valDataloader= DataLoader(
             valTensorDataSet,
@@ -475,9 +482,9 @@ class vanillaDsvddLoop():
         
     def testStep(self,testDataset,printAll=True):
         
-        x_test,y_test = testDataset, testDataset
+        x_test,y_test = testDataset[0], testDataset[1]
         
-        testTensorDataSet = TensorDataset(x_test,y_test)
+        testTensorDataSet = TensorDataset(torch.tensor(x_test),torch.tensor(y_test))
         
         testDataloader= DataLoader(
             testTensorDataSet,
@@ -582,7 +589,10 @@ class vanillaDsvddLoop():
         )
         
         print(f'loading AE weight start...')
-        loadedAeWeight = torch.load(os.path.join(self.config['ae_save_load_path'],'ae_',str(iterNum))+'.pt')
+        preAeSavePath = os.path.join(self.config['modelSavePath'],'models/pre_ae')
+        
+        loadedAeWeight = torch.load(os.path.join(preAeSavePath,'ae_',str(iterNum))+'.pt')
+        
         missing = DSVDD_preAE.load_state_dict(loadedAeWeight)
         
         print('loading AE weight complete!')
@@ -596,7 +606,9 @@ class vanillaDsvddLoop():
         )
         
         print(f'loading main model weight start...')
-        loadedMainModelWight = torch.load(os.path.join(self.config['mainmodel_save_load_path'],'ae_',str(iterNum))+'.pt')
+        mainModelSavePath = os.path.join(self.config['modelSavePath'],'models/main_model')
+        
+        loadedMainModelWight = torch.load(os.path.join(mainModelSavePath,'mainModel_',str(iterNum))+'.pt')
         missing = DSVDD_model.load_state_dict(loadedMainModelWight)
         print('saving MainModel weight complete!')
         
