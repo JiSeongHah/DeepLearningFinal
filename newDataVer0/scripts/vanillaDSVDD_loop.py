@@ -13,6 +13,7 @@ from sklearn.metrics import roc_auc_score,average_precision_score, confusion_mat
 from vanillaDSVDD_model import naiveFCN, naivePreAutoEncoder
 from torch.utils.data import DataLoader
 from sklearn.model_selection import train_test_split
+import copy
 
 class vanillaDsvddLoop():
     def __init__(self,config) -> None:
@@ -20,19 +21,16 @@ class vanillaDsvddLoop():
         
         self.trainLossTmp = []
         self.trainAccTmp = []
-        
         self.trainLoss = []
         self.trainAcc = []
         
         self.valLossTmp = []
         self.valAccTmp = []
-        
         self.valLoss = []
         self.valAcc = []
         
         self.testLossTmp = []
         self.testAccTmp = []
-        
         self.testLoss = []
         self.testAcc = []
         
@@ -42,7 +40,13 @@ class vanillaDsvddLoop():
         self.modelLossLstTrnTmp = []
         self.modelLossLstTrn = []
         
+        self.val_averagePrecisionLst = []
+        self.val_rocAucLst = []
+        self.val_f_lst = []
         
+        self.test_averagePrecisionLst = []
+        self.test_rocAucLst = []
+        self.test_f_lst = []
     
     def runTrain(self,dataSet):
         
@@ -80,7 +84,7 @@ class vanillaDsvddLoop():
         
         
         for eachEpoch in range(len(self.config['preAE_epoch'])):
-            self.trainPreAE(aeTrainDataSet=(x_train,y_train))
+            self.trainPreAE(aeTrainDataSet=(copy.deepcopy(x_train),copy.deepcopy(y_train)))
             self.trainPreAEEnd()
         
         self.saveWeightAE(iterNum=len(self.config['preAE_epoch']))
@@ -89,11 +93,23 @@ class vanillaDsvddLoop():
         centre= self.setCentre(self,normalDataSet=(x_train,y_train))
         
         for eachEpoch in range(len(self.config['mainModel_epoch'])):
-            self.trainMainModel(aeTrainDataSet=(x_train,y_train))
+            self.trainMainModel(aeTrainDataSet=(copy.deepcopy(x_train),copy.deepcopy(y_train)))
             self.trainModelEnd()
             self.validationStep(validationDataset= (x_val,y_val))
             self.validationStepEnd()
             
+        self.saveWeightMainModel(iterNum=len(self.config['mainModel_epoch']))
+        
+        save_dict = {
+            'ae_train_loss': self.AElossLstTrn,
+            'model_train_loss': self.modelLossLstTrn,
+            'val_average_precision': self.val_averagePrecisionLst,
+            'val_roc_auc': self.val_rocAucLst,
+            'val_f1': self.val_f_lst
+        }
+        
+        return save_dict
+        
     def split_trn_val(self,dataSet):
         
         x_train_total = []
@@ -143,13 +159,13 @@ class vanillaDsvddLoop():
             
             for idx,bInputLabel in enumerate(aeTrainDataloader):
                 
-                bInput = bInputLabel[0]
+                bInput, bLabel = bInputLabel
                 
                 self.AEoptim.zero_grad()
                                 
                 answer = bInput.clone().detach().float()
                             
-                bOutput = self.SVDD_preAE(bInput.float().to(self.device)).cpu()
+                bOutput = self.DSVDD_preAE(bInput.float().to(self.device)).cpu()
                 
                 loss = self.calMSELoss(bOutput,answer)
                 
@@ -169,7 +185,7 @@ class vanillaDsvddLoop():
         plt.xlabel('Epoch')
         plt.ylabel('Loss')
         plt.title(f'Auto Encoder Train Loss')
-        plt.savefig(os.path.join(self.config['plotSaveDir'],'aeTrainLossPlot.png'),dpi=200)
+        plt.savefig(os.path.join(self.config['plotSaveDir'],'aeTrainLossPlot.png'),dpi=300)
         plt.cla()
         plt.clf()
         plt.close()
@@ -186,7 +202,6 @@ class vanillaDsvddLoop():
     def saveWeightMainModel(self,iterNum):
         
         torch.save(self.DSVDD_model.state_dict(),os.path.join(self.config['mainmodel_save_load_path'],'ae_',str(iterNum))+'.pt')
-        
         
         print('saving MainModel weight complete')
         
@@ -220,7 +235,7 @@ class vanillaDsvddLoop():
         with torch.set_grad_enabled(False):
             for idx, bInputLabel in enumerate(aeTrainDataloader):
                 
-                bInput= bInputLabel[0]
+                bInput, bLabel = bInputLabel
             
                 self.AEoptim.zero_grad()
                                 
@@ -259,19 +274,19 @@ class vanillaDsvddLoop():
                 
         tqdm._instances.clear()
         theDloader = tqdm(
-            DataLoader(mainModelTrainTensorDataSet,batch_size =self.trnBSizeMain,shuffle=True,num_workers=0),
+            DataLoader(mainModelTrainTensorDataSet,batch_size =self.config['mainmodel_batch_size'],shuffle=True,num_workers=0),
             position=0,
             leave=True
         )
         
         for idx,bInputLabel in enumerate(theDloader):
                 
-            bInput = bInputLabel[0]
+            bInput,bLabel = bInputLabel
             
             self.Modeloptim.zero_grad()
 
             with torch.set_grad_enabled(True):
-                bOutput = self.SVDD_model(bInput.float().to(self.device)).cpu()
+                bOutput = self.DSVDD_model(bInput.float().to(self.device)).cpu()
 
             loss = self.calMSELoss(bOutput,self.centre.repeat(bOutput.size(0),1))
 
@@ -287,9 +302,18 @@ class vanillaDsvddLoop():
         
         self.modelLossLstTrn.append(np.mean(self.modelLossLstTrnTmp))
         
+        plt.plot(range(len(self.modelLossLstTrn)),self.modelLossLstTrn)
+        plt.xlabel('Epoch')
+        plt.ylabel('Loss')
+        plt.title(f'DSVDD model Train Loss')
+        plt.savefig(os.path.join(self.config['plotSaveDir'],'mainModelTrainLossPlot.png'),dpi=300)
+        plt.cla()
+        plt.clf()
+        plt.close()
+        
         self.modelLossLstTrnTmp.clear()
         
-    def validationStep(self,validationDataSet):
+    def validationStep(self,validationDataSet,printAll=True):
         
         x_val,y_val = validationDataSet[0], validationDataSet[1]
         
@@ -305,7 +329,7 @@ class vanillaDsvddLoop():
     
         totalScoreLstVal = []
         totalLabelLstVal  =[]
-         
+    
         self.DSVDD_model.to(self.device)
         self.DSVDD_model.eval()
     
@@ -320,7 +344,7 @@ class vanillaDsvddLoop():
             
             for idx,(totalBInput) in enumerate(theDloader):
                 
-                bInput, bLabel = totalBInput[0], totalBInput[1]
+                bInput, bLabel = totalBInput
                 
                 self.Modeloptim.zero_grad()
                                 
@@ -341,14 +365,13 @@ class vanillaDsvddLoop():
         print(f'shape of label : {totalLabelTrue.shape}')
         print(f'shape of score : {totalScores.shape}')
         
-        
         print(f'min Score is : {min(totalScores)} while max Score is : {max(totalScores)}')
         saveMin = min(totalScores)
         saveMax = max(totalScores)
         minMaxedScore = (totalScores-min(totalScores)) / (max(totalScores)-min(totalScores))
 
-        averagePrecisionScore = average_precision_score(totalLabelTrue,minMaxedScore)
-        rocAucScore = roc_auc_score(totalLabelTrue,minMaxedScore)
+        averagePrecisionScore = average_precision_score(y_true=totalLabelTrue,y_score=minMaxedScore)
+        rocAucScore = roc_auc_score(y_true=totalLabelTrue,y_score=minMaxedScore)
         
         fLst = []
         resultPerThresholdLst = []
@@ -358,11 +381,11 @@ class vanillaDsvddLoop():
 
             labelPred = np.where(totalScores >= eachThreshold, 1,0)
 
-            tn, fp, fn, tp = confusion_matrix(totalLabelTrue,labelPred).ravel()
+            tn, fp, fn, tp = confusion_matrix(y_true=totalLabelTrue,y_pred=labelPred).ravel()
 
-            precisionScore = precision_score(totalLabelTrue,labelPred)
-            recallScore = recall_score(totalLabelTrue,labelPred)
-            f1Score = f1_score(totalLabelTrue,labelPred)
+            precisionScore = precision_score(y_true=totalLabelTrue,y_pred=labelPred)
+            recallScore = recall_score(y_true=totalLabelTrue,y_pred=labelPred)
+            f1Score = f1_score(y_true=totalLabelTrue,y_pred=labelPred)
             fLst.append(f1Score)
             resultPerThresholdLst.append([eachThreshold,tn,fp,fn,tp,precisionScore,recallScore,f1Score])
 
@@ -377,9 +400,43 @@ class vanillaDsvddLoop():
         
         print([averagePrecisionScore , rocAucScore ,fMax[-1],fMax])
         
-        return [averagePrecisionScore,rocAucScore,fMax,resultPerThresholdLst]
+        self.val_averagePrecisionLst.append(averagePrecisionScore)
+        self.val_rocAucLst.append(rocAucScore)
+        self.val_f_lst.append(fMax)
         
-    def runTest(self):
+    def validationStepEnd(self):
+        
+        plt.plot(range(len(self.val_averagePrecisionLst)),self.val_averagePrecisionLst)
+        plt.xlabel('Epoch')
+        plt.ylabel('Average precision')
+        plt.title(f'DSVDD model validation average precision')
+        plt.savefig(os.path.join(self.config['plotSaveDir'],'valAveragePrecision.png'),dpi=300)
+        plt.cla()
+        plt.clf()
+        plt.close()
+        
+        plt.plot(range(len(self.val_rocAucLst)),self.val_rocAucLst)
+        plt.xlabel('Epoch')
+        plt.ylabel('Roc auc')
+        plt.title(f'DSVDD model validation roc auc')
+        plt.savefig(os.path.join(self.config['plotSaveDir'],'valRocAuc.png'),dpi=300)
+        plt.cla()
+        plt.clf()
+        plt.close()
+        
+        fOnlyLst = [i[-1] for i in self.val_f_lst]
+        plt.plot(range(len(fOnlyLst)),fOnlyLst)
+        plt.xlabel('Epoch')
+        plt.ylabel('f1 score')
+        plt.title(f'DSVDD model validation f1 score')
+        plt.savefig(os.path.join(self.config['plotSaveDir'],'val_f1_score.png'),dpi=300)
+        plt.cla()
+        plt.clf()
+        plt.close()
+        
+        
+        
+    def runTest(self,dataSet):
         
         USE_CUDA = torch.cuda.is_available()
         print(USE_CUDA)
@@ -403,28 +460,146 @@ class vanillaDsvddLoop():
             inputSize=self.config['inputSize']
         )
         
+        x_test = []
+        y_test = []
         
-        x_train, x_val, y_train, y_val = self.split_trn_val(dataSet)
+        for eachData in dataSet:
+            x_test.append(eachData[0])
+            y_test.append(eachData[1])
+            
+        x_test = np.stack(x_test)
+        y_test = np.stack(y_test)
         
+        whichLabelAbnormal = self.config['which_label_abnormal']
+        y_test = np.where(y_test==whichLabelAbnormal,1,0)
         
-        for eachEpoch in range(len(self.config['preAE_epoch'])):
-            self.trainPreAE(aeTrainDataSet=(x_train,y_train))
-            self.trainPreAEEnd()
+        self.loadWeightAE()
+        self.loadWeightMainModel()
         
-        self.saveWeightAE(iterNum=len(self.config['preAE_epoch']))
-        self.transferAEtoMainModel()
+        self.centre = np.load(os.path.join(self.config['mainmodel_save_load_path'],'cSave.npy'))
         
-        centre= self.setCentre(self,normalDataSet=(x_train,y_train))
+        self.testStep(testDataset= (x_test,y_test))
+        self.testStepEnd()
         
-        for eachEpoch in range(len(self.config['mainModel_epoch'])):
-            self.trainMainModel(aeTrainDataSet=(x_train,y_train))
-            self.trainModelEnd()
-            self.validationStep(validationDataset= (x_val,y_val))
-            self.validationStepEnd()
+        save_dict = {
+            'test_average_precision': self.test_averagePrecisionLst,
+            'test_roc_auc': self.test_rocAucLst,
+            'test_f1': self.test_f_lst
+        }
+        
+        return save_dict
+        
+    def testStep(self,testDataset):
+        
+        x_test,y_test = testDataset, testDataset
+        
+        testTensorDataSet = TensorDataset(x_test,y_test)
+        
+        testDataloader= DataLoader(
+            testTensorDataSet,
+            batch_size=self.config['mainmodel_batch_size'],
+            shuffle=False,
+            drop_last=False
+        )
         
     
-    def saveModel(self):
-        pass
+        totalScoreLstTest = []
+        totalLabelLstTest  =[]
     
-    def loadModel(self):
+        self.DSVDD_model.to(self.device)
+        self.DSVDD_model.eval()
+    
+        
+        theDloader = tqdm(
+            testDataloader,
+            position=0,
+            leave=True
+        )
+        
+        with torch.set_grad_enabled(False):
+            
+            for idx,(totalBInput) in enumerate(theDloader):
+                
+                bInput, bLabel = totalBInput
+                
+                self.Modeloptim.zero_grad()
+                                
+                bOutput = self.DSVDD_model(bInput.float().to(self.device)).cpu()
+                
+                eachScore = self.calMSELoss(bOutput,self.centre.repeat(bOutput.size(0),1),reduction='none')
+                
+                useMax=  self.config['useMax_when_val']
+                if useMax == True:
+                    totalScoreLstTest.append(torch.amax(eachScore,dim=(1,2)))
+                else:
+                    totalScoreLstTest.append(torch.mean(eachScore,dim=(1,2)))
+                    
+                totalLabelLstTest.append(bLabel)
+                              
+        totalLabelTrue, totalScores = torch.cat(totalLabelLstTest).numpy(), torch.cat(totalScoreLstTest).numpy()
+        
+        print(f'shape of label : {totalLabelTrue.shape}')
+        print(f'shape of score : {totalScores.shape}')
+        
+        print(f'min Score is : {min(totalScores)} while max Score is : {max(totalScores)}')
+        saveMin = min(totalScores)
+        saveMax = max(totalScores)
+        minMaxedScore = (totalScores-min(totalScores)) / (max(totalScores)-min(totalScores))
+
+        averagePrecisionScore = average_precision_score(y_true=totalLabelTrue,y_score=minMaxedScore)
+        rocAucScore = roc_auc_score(y_true=totalLabelTrue,y_score=minMaxedScore)
+        
+        fLst = []
+        resultPerThresholdLst = []
+
+        thresholdLst = [i/1000 for i in range(1,1000)]
+        for eachThreshold in thresholdLst:
+
+            labelPred = np.where(totalScores >= eachThreshold, 1,0)
+
+            tn, fp, fn, tp = confusion_matrix(y_true=totalLabelTrue,y_pred=labelPred).ravel()
+
+            precisionScore = precision_score(y_true=totalLabelTrue,y_pred=labelPred)
+            recallScore = recall_score(y_true=totalLabelTrue,y_pred=labelPred)
+            f1Score = f1_score(y_true=totalLabelTrue,y_pred=labelPred)
+            fLst.append(f1Score)
+            resultPerThresholdLst.append([eachThreshold,tn,fp,fn,tp,precisionScore,recallScore,f1Score])
+
+            if printAll ==True:
+                print(resultPerThresholdLst[-1])
+
+        fMax = resultPerThresholdLst[fLst.index(max(fLst))]
+
+        print('mission complete')
+
+        self.DSVDD_model.to('cpu')
+        
+        print([averagePrecisionScore , rocAucScore ,fMax[-1],fMax])
+        
+        self.test_averagePrecisionLst.append(averagePrecisionScore)
+        self.test_rocAucLst.append(rocAucScore)
+        self.test_f_lst.append(fMax)
+        
+        
+        
+        
+    def testStepEnd(self):
+        
         pass
+        
+        
+        
+    
+    def loadWeightAE(self,iterNum):
+        print(f'loading AE weight start...')
+        loadedAeWeight = torch.load(os.path.join(self.config['ae_save_load_path'],'ae_',str(iterNum))+'.pt')
+        missing = self.DSVDD_preAE.load_state_dict(loadedAeWeight)
+        
+        print('loading AE weight complete!')
+        
+        
+    def loadWeightMainModel(self,iterNum):
+        print(f'loading main model weight start...')
+        loadedMainModelWight = torch.load(os.path.join(self.config['mainmodel_save_load_path'],'ae_',str(iterNum))+'.pt')
+        missing = self.DSVDD_model.load_state_dict(loadedMainModelWight)
+        print('saving MainModel weight complete!')
