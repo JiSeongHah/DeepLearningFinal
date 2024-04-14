@@ -129,27 +129,7 @@ class denoisingDsvddLoop:
 
         return save_dict
 
-    def split_trn_val(self, dataSet):
-
-        x_train_total = []
-        y_train_total = []
-
-        for eachData in dataSet:
-            x_train_total.append(eachData[0])
-            y_train_total.append(eachData[1])
-
-        x_train_total = np.stack(x_train_total)
-        y_train_total = np.stack(y_train_total)
-
-        whichLabelAbnormal = self.config["which_label_abnormal"]
-        y_train_total = np.where(y_train_total == whichLabelAbnormal, 1, 0)
-
-        x_train, x_val, y_train, y_val = train_test_split(
-            x_train_total, y_train_total, test_size=0.2, random_state=42
-        )
-
-        return x_train, x_val, y_train, y_val
-
+    
     def calMSELoss(self, output, label, reduction="mean"):
 
         loss = nn.MSELoss(reduction=reduction)
