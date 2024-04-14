@@ -22,7 +22,7 @@ from sklearn.model_selection import train_test_split
 import copy
 import os
 
-from data_utils import change_data,check_and_normalize
+from data_utils import change_data,check_and_normalize,dataSetToTensor,convert_label_binary,return_normal_only
 
 
 
@@ -92,13 +92,17 @@ class vanillaDsvddLoop:
             self.DSVDD_preAE.parameters(), lr=3e-4, weight_decay=0.5e-3
         )
         
-        x_train_total, y_train_total = change_data(dataSet=dataSet,config=self.config,mode='normal_only')
+        x_total, y_total = dataSetToTensor(dataSet=dataSet)
+        
+        y_total = convert_label_binary(label_tensor=y_total,config=self.config)
 
-        x_train_total = check_and_normalize(x_train_total,self.config,mode='train')
+        x_total = check_and_normalize(x_total,self.config,mode='train')
         
         x_train, x_val, y_train, y_val = train_test_split(
-            x_train_total, y_train_total, test_size=0.2, random_state=42
+            x_total, y_total, test_size=0.2, random_state=42
         )
+        
+        x_train, y_train = return_normal_only(x_train,y_train)
         
         for eachEpoch in range(self.config["preAE_epoch"]):
             self.trainPreAE(
@@ -502,7 +506,7 @@ class vanillaDsvddLoop:
 
         x_test, y_test = change_data(dataSet=dataSet,config=self.config,mode='all')
         
-        x_test = check_and_normalize(x_test,self.config,mode='test')
+        x_test = check_and_normalize(x_test,self.config)
         
         cSavePath = os.path.join(self.config["modelSavePath"], "models/center")
         self.centre = torch.tensor(np.load(os.path.join(cSavePath, "cSave.npy")))

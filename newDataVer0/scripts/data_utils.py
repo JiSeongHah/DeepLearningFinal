@@ -83,9 +83,7 @@ def change_data(dataSet,config,mode):
         print('converting data into binary')
         return data_X, data_y
 
-def check_and_normalize(data_x,config,mode):
-    
-    assert mode in ['train','test']
+def check_and_normalize(data_x,config):
     
     if config['normalize'] is True:
         
@@ -105,10 +103,64 @@ def check_and_normalize(data_x,config,mode):
         
         return data_x
     
+def dataSetToTensor(dataSet):
+    
+    x = []
+    y = []
+    
+    for eachData in dataSet:
+        
+        x.append(eachData[0])
+        y.append(eachData[1])
+        
+    x = np.stack(x)
+    y= np.stack(y)
+    
+    return x, y
 
+def convert_label_binary(label_tensor,config):
+    
+    if config.get('normal_label') is not None and config.get('which_label_abnormal') is not None:
+            
+        raise Exception('normal_label 과 which_label_abnormal 둘다 존재합니다. 이 중 하나는 None이어야 합니다.')
+        
+    elif config.get('normal_label') is None and config.get('which_label_abnormal') is None:
+        
+        raise Exception('normal_label 과 which_label_abnormal 둘다 None입니다. 하나는 값이 존재해야 합니다.')
+        
+    elif config.get('normal_label') is not None and config.get('which_label_abnormal') is None:
+        
+        normal_label = config['normal_label']
+        label_tensor = np.where(label_tensor==normal_label,0,1)
+        print('touching normal label..')
+        return label_tensor
+        
+    elif config.get('normal_label') is None and config.get('which_label_abnormal') is not None:
+        
+        normal_label = config['which_label_abnormal']
+        label_tensor = np.where(label_tensor==normal_label,1,0)
+        print('converting data into binary')
+        return label_tensor
+    
+def return_normal_only(x_train,y_train):
+    
+    filtered_x = []
+    filtered_y = []
+    
+    for each_x,each_y in zip(x_train,y_train):
+        
+        if each_y == 0:
+            
+            filtered_x.append(each_x)
+            filtered_y.append(each_y)
+            
+    filtered_x = np.stack(filtered_x)
+    filtered_y = np.stack(filtered_y)
+    
+    return filtered_x,filtered_y
+        
+        
+        
+        
     
     
-    
-    
-
-
