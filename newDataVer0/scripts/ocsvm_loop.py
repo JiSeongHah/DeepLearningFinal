@@ -14,7 +14,7 @@ class ocsvmLoop():
         x_train = []
         y_train = []
         
-        maxNum = 100000
+        maxNum = 1000
         flgDict= {}
         for eachData in dataSet:
             if eachData[1] not in flgDict.keys():

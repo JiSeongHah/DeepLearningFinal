@@ -82,6 +82,9 @@ class vanillaDsvddLoop():
         
         x_train, x_val, y_train, y_val = self.split_trn_val(dataSet)
         
+        x_train = (x_train-0.131)/0.308
+        x_val = (x_val-0.131)/0.308
+        
         
         for eachEpoch in range(self.config['preAE_epoch']):
             self.trainPreAE(aeTrainDataSet=(copy.deepcopy(x_train),copy.deepcopy(y_train)))
@@ -485,6 +488,8 @@ class vanillaDsvddLoop():
         
         whichLabelAbnormal = self.config['which_label_abnormal']
         y_test = np.where(y_test==whichLabelAbnormal,1,0)
+        
+        x_test = (x_test-0.131)/0.308
         
         cSavePath = os.path.join(self.config['modelSavePath'],'models/center')
         self.centre = torch.tensor(np.load(os.path.join(cSavePath,'cSave.npy')))
