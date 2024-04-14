@@ -68,19 +68,18 @@ def check_and_normalize(data_x,config,mode):
     
     if config['normalize'] is True:
         
-        if mode == 'train':
+        if config['data_type'] == 'mnist':
+            
+            mean = config['mnist_mean']
+            std = config['mnist_std']
+            
+        elif config['data_type'] == 'mnist':
+            
+            mean = config['cifar_mean']
+            std = config['cifar_std']
         
-            mean = config['train_mean']
-            std = config['train_std']
-            
-            return (data_x -mean)/std
-        
-        else:
-            
-            mean = config['test_mean']
-            std = config['test_std']
-            
-            return (data_x -mean)/std
+        return (data_x -mean)/std
+
     else:
         
         return data_x
