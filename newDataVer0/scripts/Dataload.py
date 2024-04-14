@@ -3,7 +3,7 @@ import yaml
 from pprint import pprint
 from torchvision import datasets, transforms
 import torch
-
+import pickle
 
 def loadData(configs, isTrain):
 
@@ -29,7 +29,25 @@ def loadData(configs, isTrain):
         )
 
         return loadedData
-
+    
+    elif whichData in [f"mnist_{i}" for i in range(1,11)]:
+        
+        if isTrain is True:
+            noise_intensity =whichData.split('_')[1]
+            dataLoadPath = f'/home/asdflkj3123/mainDir/forUni/theDir1/DeepLearningFinal/newDataVer0/scripts/data_download_path/noisedData/mnist/train/noise_{noise_intensity}.pickle'
+            
+            with open(dataLoadPath,'rb') as F:
+                loadedData = pickle.load(F)
+                
+        if isTrain is False:
+            noise_intensity =whichData.split('_')[1]
+            dataLoadPath = f'/home/asdflkj3123/mainDir/forUni/theDir1/DeepLearningFinal/newDataVer0/scripts/data_download_path/noisedData/mnist/test/noise_{noise_intensity}.pickle'
+            
+            with open(dataLoadPath,'rb') as F:
+                loadedData = pickle.load(F)
+                
+        return loadedData
+                
     elif whichData == "cifar10":
         loadedData = datasets.CIFAR10(
             root=dataDownPath,
@@ -38,6 +56,24 @@ def loadData(configs, isTrain):
             transform=transforms.ToTensor(),
         )
 
+        return loadedData
+    
+    elif whichData in [f"cifar_{i}" for i in range(1,11)]:
+        
+        if isTrain is True:
+            noise_intensity =whichData.split('_')[1]
+            dataLoadPath = f'/home/asdflkj3123/mainDir/forUni/theDir1/DeepLearningFinal/newDataVer0/scripts/data_download_path/noisedData/cifar/train/noise_{noise_intensity}.pickle'
+            
+            with open(dataLoadPath,'rb') as F:
+                loadedData = pickle.load(F)
+                
+        if isTrain is False:
+            noise_intensity =whichData.split('_')[1]
+            dataLoadPath = f'/home/asdflkj3123/mainDir/forUni/theDir1/DeepLearningFinal/newDataVer0/scripts/data_download_path/noisedData/mnist/test/noise_{noise_intensity}.pickle'
+            
+            with open(dataLoadPath,'rb') as F:
+                loadedData = pickle.load(F)
+                
         return loadedData
 
     else:

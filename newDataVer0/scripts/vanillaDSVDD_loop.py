@@ -96,7 +96,7 @@ class vanillaDsvddLoop:
         
         y_total = convert_label_binary(label_tensor=y_total,config=self.config)
 
-        x_total = check_and_normalize(x_total,self.config,mode='train')
+        x_total = check_and_normalize(x_total,self.config)
         
         x_train, x_val, y_train, y_val = train_test_split(
             x_total, y_total, test_size=0.2, random_state=42
