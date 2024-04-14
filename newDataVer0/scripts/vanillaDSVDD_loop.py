@@ -22,6 +22,10 @@ from sklearn.model_selection import train_test_split
 import copy
 import os
 
+from data_utils import change_data,check_and_normalize
+
+
+
 
 class vanillaDsvddLoop:
     def __init__(self, config) -> None:
@@ -87,12 +91,15 @@ class vanillaDsvddLoop:
         self.AEoptim = AdamW(
             self.DSVDD_preAE.parameters(), lr=3e-4, weight_decay=0.5e-3
         )
+        
+        x_train_total, y_train_total = change_data(dataSet=dataSet,config=self.config)
 
-        x_train, x_val, y_train, y_val = self.split_trn_val(dataSet)
-
-        x_train = (x_train - 0.131) / 0.308
-        x_val = (x_val - 0.131) / 0.308
-
+        x_train_total = check_and_normalize(x_train_total,self.config,mode='train')
+        
+        x_train, x_val, y_train, y_val = train_test_split(
+            x_train_total, y_train_total, test_size=0.2, random_state=42
+        )
+        
         for eachEpoch in range(self.config["preAE_epoch"]):
             self.trainPreAE(
                 aeTrainDataSet=(copy.deepcopy(x_train), copy.deepcopy(y_train))
@@ -123,27 +130,6 @@ class vanillaDsvddLoop:
         }
 
         return save_dict
-
-    def split_trn_val(self, dataSet):
-
-        x_train_total = []
-        y_train_total = []
-
-        for eachData in dataSet:
-            x_train_total.append(eachData[0])
-            y_train_total.append(eachData[1])
-
-        x_train_total = np.stack(x_train_total)
-        y_train_total = np.stack(y_train_total)
-
-        whichLabelAbnormal = self.config["which_label_abnormal"]
-        y_train_total = np.where(y_train_total == whichLabelAbnormal, 1, 0)
-
-        x_train, x_val, y_train, y_val = train_test_split(
-            x_train_total, y_train_total, test_size=0.2, random_state=42
-        )
-
-        return x_train, x_val, y_train, y_val
 
     def calMSELoss(self, output, label, reduction="mean"):
 
@@ -514,21 +500,10 @@ class vanillaDsvddLoop:
             self.DSVDD_preAE.parameters(), lr=3e-4, weight_decay=0.5e-3
         )
 
-        x_test = []
-        y_test = []
-
-        for eachData in dataSet:
-            x_test.append(eachData[0])
-            y_test.append(eachData[1])
-
-        x_test = np.stack(x_test)
-        y_test = np.stack(y_test)
-
-        whichLabelAbnormal = self.config["which_label_abnormal"]
-        y_test = np.where(y_test == whichLabelAbnormal, 1, 0)
-
-        x_test = (x_test - 0.131) / 0.308
-
+        x_test, y_test = change_data(dataSet=dataSet,config=self.config)
+        
+        x_test = check_and_normalize(x_test,self.config,mode='test')
+        
         cSavePath = os.path.join(self.config["modelSavePath"], "models/center")
         self.centre = torch.tensor(np.load(os.path.join(cSavePath, "cSave.npy")))
 

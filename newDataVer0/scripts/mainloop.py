@@ -4,7 +4,12 @@ from ocsvm_loop import ocsvmLoop
 from vanillaDSVDD_loop import vanillaDsvddLoop
 from mySSVDD.ssvdd_train import ssvdd_train
 from mySSVDD.ssvdd_test import ssvdd_test
+from smoothedDSVDD_loop import smoothedDsvddLoop
+from denoisingDSVDD_loop import denoisingDsvddLoop
+
+
 from Dataload import myNewDataset
+
 from sklearn.metrics import (
     confusion_matrix,
     roc_auc_score,
@@ -53,6 +58,12 @@ class MainLoop:
 
         elif whichModel == "vanilla_dsvdd":
             model = vanillaDsvddLoop(config=self.config)
+            
+        elif whichModel == 'smoothed_dsvdd':
+            model = smoothedDsvddLoop(config=self.config)
+        
+        elif whichModel == 'denoising_dsvdd':
+            model = denoisingDsvddLoop(config=self.config)
 
         trainResult = model.runTrain(dataSet=trainDataSet)
 
@@ -63,8 +74,10 @@ class MainLoop:
         return trainResult
 
     def trainResultToConfig(self, trainResult):
-
+        
         whichModel = self.config["which_model"]
+        
+        assert whichModel in ["ssvdd", "ocsvm","vanilla_dsvdd","smoothed_dsvdd",'denoising_dsvdd']
 
         if whichModel in ["ssvdd", "ocsvm"]:
 
@@ -105,15 +118,16 @@ class MainLoop:
 
             self.config["trainResult"]["time"] = datetime.now()
 
-        elif whichModel == "vanilla_dsvdd":
+        elif whichModel in ["vanilla_dsvdd","smoothed_dsvdd",'denoising_dsvdd']:
             from pprint import pprint
 
             for i in range(10):
                 pprint(trainResult)
-                print("")
-                print("")
-                print("")
+                pprint("")
+                pprint("")
+                pprint("")
             self.config["trainResult"] = {}
+            
             self.config["trainResult"]["ae_trian_loss"] = {
                 f"epoch_{idx}": str(i)
                 for idx, i in enumerate(trainResult["ae_train_loss"])
