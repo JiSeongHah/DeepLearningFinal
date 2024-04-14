@@ -168,9 +168,10 @@ class denoisingDsvddLoop:
 
                 answer = bInput.clone().detach().float()
 
+                noise_ratio = self.config['noise_ratio']
                 bOutput = self.DSVDD_preAE(
                     bInput.float().to(self.device)
-                    + torch.randn(bInput.size().to(self.device))
+                    + noise_ratio*torch.randn(bInput.size().to(self.device))
                 ).cpu()
 
                 loss = self.calMSELoss(bOutput, answer)
