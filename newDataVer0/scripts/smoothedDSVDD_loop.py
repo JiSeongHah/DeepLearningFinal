@@ -23,7 +23,7 @@ import copy
 import os
 
 
-class vanillaDsvddLoop:
+class smoothedDsvddLoop:
     def __init__(self, config) -> None:
         self.config = config
 
@@ -331,6 +331,9 @@ class vanillaDsvddLoop:
 
             self.Modeloptim.zero_grad()
 
+            with torch.set_grad_enabled(False):
+                bInput = self.DSVDD_preAE(bInput.float().to(self.device)).cpu()
+
             with torch.set_grad_enabled(True):
                 bOutput = self.DSVDD_model(bInput.float().to(self.device)).cpu()
 
@@ -390,6 +393,8 @@ class vanillaDsvddLoop:
                 bInput, bLabel = totalBInput
 
                 self.Modeloptim.zero_grad()
+
+                bInput = self.DSVDD_preAE(bInput.float().to(self.device)).cpu()
 
                 bOutput = self.DSVDD_model(bInput.float().to(self.device)).cpu()
 
@@ -571,6 +576,8 @@ class vanillaDsvddLoop:
                 bInput, bLabel = totalBInput
 
                 self.Modeloptim.zero_grad()
+
+                bInput = self.DSVDD_preAE(bInput.float().to(self.device)).cpu()
 
                 bOutput = self.DSVDD_model(bInput.float().to(self.device)).cpu()
 
