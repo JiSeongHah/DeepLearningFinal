@@ -396,6 +396,8 @@ class smoothedDsvddLoop:
                 bInput, bLabel = totalBInput
 
                 self.Modeloptim.zero_grad()
+                
+                bInput = self.DSVDD_preAE(bInput.float().to(self.device)).cpu()
 
                 bOutput = self.DSVDD_model(bInput.float().to(self.device)).cpu()
 
@@ -577,6 +579,8 @@ class smoothedDsvddLoop:
                 bInput, bLabel = totalBInput
 
                 self.Modeloptim.zero_grad()
+                
+                bInput = self.DSVDD_preAE(bInput.float().to(self.device)).cpu()
 
                 bOutput = self.DSVDD_model(bInput.float().to(self.device)).cpu()
 
