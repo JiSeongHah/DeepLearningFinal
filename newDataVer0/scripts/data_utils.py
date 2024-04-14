@@ -2,45 +2,66 @@ import torch
 import numpy as np
 from sklearn.model_selection import train_test_split
 
-def convert_label(dataSet,config):
+def touch_abnormal(dataSet,config,mode):
 
-    x_train_total = []
-    y_train_total = []
+    x_total = []
+    y_total = []
 
     for eachData in dataSet:
-        x_train_total.append(eachData[0])
-        y_train_total.append(eachData[1])
+        x_total.append(eachData[0])
+        y_total.append(eachData[1])
 
-    x_train_total = np.stack(x_train_total)
-    y_train_total = np.stack(y_train_total)
+    x_total = np.stack(x_total)
+    y_total = np.stack(y_total)
 
     whichLabelAbnormal = config["which_label_abnormal"]
-    y_train_total = np.where(y_train_total == whichLabelAbnormal, 1, 0)
+    y_total = np.where(y_total == whichLabelAbnormal, 1, 0)
     
-    return x_train_total, y_train_total
+    return x_total, y_total
 
-def get_normal_only(dataSet,config):
+def touch_normal(dataSet,config,mode):
     
-    normal_label = config['normal_label']
+    assert mode in ['normal_only','all']
     
-    x = []
-    y = []
+    if mode == 'normal_only':
     
-    for eachData in dataSet:
-        if y == normal_label:
+        normal_label = config['normal_label']
+        
+        x = []
+        y = []
+        
+        for eachData in dataSet:
+            
+            if eachData[1] == normal_label:
+                x.append(eachData[0])
+                y.append(eachData[1])
+            
+        x = np.stack(x)
+        y= np.stack(y)
+        
+        return x, y
+
+    else:
+        
+        normal_label = config['normal_label']
+        
+        x = []
+        y = []
+        
+        for eachData in dataSet:
+            
             x.append(eachData[0])
             y.append(eachData[1])
+            
+        x = np.stack(x)
+        y= np.stack(y)
         
-    x = np.stack(x)
-    y= np.stack(y)
-    
-    return x, y
-    
+        y= np.where(y == normal_label, 0, 1)
+        
+        return x, y
     
     
-    return x_train, x_val, y_train, y_val
-
-def change_data(dataSet,config):
+def change_data(dataSet,config,mode):
     
     if config.get('normal_label') is not None and config.get('which_label_abnormal') is not None:
             
@@ -52,13 +73,13 @@ def change_data(dataSet,config):
         
     elif config.get('normal_label') is not None and config.get('which_label_abnormal') is None:
         
-        data_X,data_y = get_normal_only(dataSet=dataSet,config=config)
+        data_X,data_y = touch_normal(dataSet=dataSet,config=config,mode=mode)
         print('returning normal data only')
         return data_X, data_y
         
     elif config.get('normal_label') is None and config.get('which_label_abnormal') is not None:
         
-        data_X, data_y = convert_label(dataSet=dataSet,config=config)
+        data_X, data_y = touch_abnormal(dataSet=dataSet,config=config,mode=mode)
         print('converting data into binary')
         return data_X, data_y
 
@@ -73,7 +94,7 @@ def check_and_normalize(data_x,config,mode):
             mean = config['mnist_mean']
             std = config['mnist_std']
             
-        elif config['data_type'] == 'mnist':
+        elif config['data_type'] == 'cifar':
             
             mean = config['cifar_mean']
             std = config['cifar_std']
@@ -83,6 +104,8 @@ def check_and_normalize(data_x,config,mode):
     else:
         
         return data_x
+    
+
     
     
     

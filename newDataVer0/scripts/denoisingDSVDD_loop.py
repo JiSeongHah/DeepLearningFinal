@@ -90,7 +90,7 @@ class denoisingDsvddLoop:
             self.DSVDD_preAE.parameters(), lr=3e-4, weight_decay=0.5e-3
         )
 
-        x_train_total, y_train_total = change_data(dataSet=dataSet,config=self.config)
+        x_train_total, y_train_total = change_data(dataSet=dataSet,config=self.config,mode='normal_only')
 
         x_train_total = check_and_normalize(x_train_total,self.config,mode='train')
         
@@ -508,7 +508,7 @@ class denoisingDsvddLoop:
             self.DSVDD_preAE.parameters(), lr=3e-4, weight_decay=0.5e-3
         )
 
-        x_test, y_test = change_data(dataSet=dataSet,config=self.config)
+        x_test, y_test = change_data(dataSet=dataSet,config=self.config,mode='all')
         
         x_test = check_and_normalize(x_test,self.config,mode='test')
 
