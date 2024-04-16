@@ -119,7 +119,7 @@ def check_and_normalize(data_x,config):
                 which_class = str(config.get('normal_label'))
                 
                 mean = meanStdDict[f'{which_data}_train_{which_noise}_{which_class}']['mean']
-                mean = meanStdDict[f'{which_data}_train_{which_noise}_{which_class}']['std']
+                std = meanStdDict[f'{which_data}_train_{which_noise}_{which_class}']['std']
             
             return (data_x -mean)/std
 
@@ -152,7 +152,7 @@ def check_and_normalize(data_x,config):
                 which_class = str(config.get('which_label_abnormal'))
                 
                 mean = meanStdDict[f'{which_data}_train_{which_noise}_{which_class}']['mean']
-                mean = meanStdDict[f'{which_data}_train_{which_noise}_{which_class}']['std']
+                std = meanStdDict[f'{which_data}_train_{which_noise}_{which_class}']['std']
             
             return (data_x -mean)/std
 
