@@ -1,6 +1,7 @@
 import torch
 import numpy as np
 from sklearn.model_selection import train_test_split
+import pickle
 
 def touch_abnormal(dataSet,config,mode):
 
@@ -85,23 +86,83 @@ def change_data(dataSet,config,mode):
 
 def check_and_normalize(data_x,config):
     
-    if config['normalize'] is True:
+    if config.get('normal_label') is not None and config.get('which_label_abnormal') is not None:
+            
+        raise Exception('normal_label 과 which_label_abnormal 둘다 존재합니다. 이 중 하나는 None이어야 합니다.')
         
-        if config['data_type'] == 'mnist':
-            
-            mean = config['mnist_mean']
-            std = config['mnist_std']
-            
-        elif config['data_type'] == 'cifar':
-            
-            mean = config['cifar_mean']
-            std = config['cifar_std']
+    elif config.get('normal_label') is None and config.get('which_label_abnormal') is None:
         
-        return (data_x -mean)/std
+        raise Exception('normal_label 과 which_label_abnormal 둘다 None입니다. 하나는 값이 존재해야 합니다.')
+        
+    elif config.get('normal_label') is not None and config.get('which_label_abnormal') is None:
+        
+        if config['normalize'] is True:
+        
+            if config['data_type'] == 'mnist':
+                
+                mean = config['mnist_mean']
+                std = config['mnist_std']
+                
+            elif config['data_type'] == 'cifar':
+                
+                mean = config['cifar_mean']
+                std = config['cifar_std']
+                
+            elif config['data_type'] in [f'mnist_{i}' for i in range(1,11)]+[[f'cifar_{i}' for i in range(1,11)]]:
+                
+                with open('/home/asdflkj3123/mainDir/forUni/theDir1/DeepLearningFinal/newDataVer0/scripts/data_download_path/noisedData/configs/noised_data_one_class_normal.pickle','rb') as F:
+                    
+                    meanStdDict = pickle.load(F)
 
-    else:
+                which_data = config['data_type'].split('_')[0]
+                which_noise = config['data_type'].split('_')[1]
+                which_class = str(config.get('normal_label'))
+                
+                mean = meanStdDict[f'{which_data}_train_{which_noise}_{which_class}']['mean']
+                mean = meanStdDict[f'{which_data}_train_{which_noise}_{which_class}']['std']
+            
+            return (data_x -mean)/std
+
+        else:
+            
+            return data_x
         
-        return data_x
+    elif config.get('normal_label') is None and config.get('which_label_abnormal') is not None:
+        
+        if config['normalize'] is True:
+        
+            if config['data_type'] == 'mnist':
+                
+                mean = config['mnist_mean']
+                std = config['mnist_std']
+                
+            elif config['data_type'] == 'cifar':
+                
+                mean = config['cifar_mean']
+                std = config['cifar_std']
+                
+            elif config['data_type'] in [f'mnist_{i}' for i in range(1,11)]+[[f'cifar_{i}' for i in range(1,11)]]:
+                
+                with open('/home/asdflkj3123/mainDir/forUni/theDir1/DeepLearningFinal/newDataVer0/scripts/data_download_path/noisedData/configs/noised_data_one_class_abnormal.pickle','rb') as F:
+                    
+                    meanStdDict = pickle.load(F)
+
+                which_data = config['data_type'].split('_')[0]
+                which_noise = config['data_type'].split('_')[1]
+                which_class = str(config.get('which_label_abnormal'))
+                
+                mean = meanStdDict[f'{which_data}_train_{which_noise}_{which_class}']['mean']
+                mean = meanStdDict[f'{which_data}_train_{which_noise}_{which_class}']['std']
+            
+            return (data_x -mean)/std
+
+        else:
+            
+            return data_x
+    
+    
+    
+    
     
 def dataSetToTensor(dataSet):
     
