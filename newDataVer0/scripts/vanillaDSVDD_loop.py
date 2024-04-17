@@ -402,6 +402,12 @@ class vanillaDsvddLoop:
 
         print(f"shape of label : {totalLabelTrue.shape}")
         print(f"shape of score : {totalScores.shape}")
+        
+        uniqueLabel = np.unique(totalLabelTrue)
+        check_key = np.sum(uniqueLabel)
+        if check_key != 1:
+            raise Exception
+         
 
         print(
             f"min Score is : {min(totalScores)} while max Score is : {max(totalScores)}"
@@ -575,6 +581,11 @@ class vanillaDsvddLoop:
 
         print(f"shape of label : {totalLabelTrue.shape}")
         print(f"shape of score : {totalScores.shape}")
+        
+        uniqueLabel = np.unique(totalLabelTrue)
+        check_key = np.sum(uniqueLabel)
+        if check_key != 1:
+            raise Exception
 
         print(
             f"min Score is : {min(totalScores)} while max Score is : {max(totalScores)}"
