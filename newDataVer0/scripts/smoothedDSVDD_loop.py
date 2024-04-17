@@ -93,7 +93,7 @@ class smoothedDsvddLoop:
         
         y_total = convert_label_binary(label_tensor=y_total,config=self.config)
 
-        x_total = check_and_normalize(x_total,self.config,mode='train')
+        x_total = check_and_normalize(x_total,self.config)
         
         x_train, x_val, y_train, y_val = train_test_split(
             x_total, y_total, test_size=0.2, random_state=42
@@ -508,7 +508,7 @@ class smoothedDsvddLoop:
 
         x_test, y_test = change_data(dataSet=dataSet,config=self.config,mode='all')
         
-        x_test = check_and_normalize(x_test,self.config,mode='test')
+        x_test = check_and_normalize(x_test,self.config)
 
         cSavePath = os.path.join(self.config["modelSavePath"], "models/center")
         self.centre = torch.tensor(np.load(os.path.join(cSavePath, "cSave.npy")))

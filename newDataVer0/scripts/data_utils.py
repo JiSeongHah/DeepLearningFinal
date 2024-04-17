@@ -4,21 +4,42 @@ from sklearn.model_selection import train_test_split
 import pickle
 
 def touch_abnormal(dataSet,config,mode):
-
-    x_total = []
-    y_total = []
-
-    for eachData in dataSet:
-        x_total.append(eachData[0])
-        y_total.append(eachData[1])
-
-    x_total = np.stack(x_total)
-    y_total = np.stack(y_total)
-
-    whichLabelAbnormal = config["which_label_abnormal"]
-    y_total = np.where(y_total == whichLabelAbnormal, 1, 0)
     
-    return x_total, y_total
+    assert mode in ['normal_only','all']
+    
+    if mode == 'abnormal_only':
+        
+        whichLabelAbnormal = config["which_label_abnormal"]
+
+        x_total = []
+        y_total = []
+
+        for eachData in dataSet:
+            if eachData[1] == whichLabelAbnormal:
+                x_total.append(eachData[0])
+                y_total.append(1)
+
+        x_total = np.stack(x_total)
+        y_total = np.stack(y_total)
+
+        
+        return x_total, y_total
+    
+    else:
+        x_total = []
+        y_total = []
+
+        for eachData in dataSet:
+            x_total.append(eachData[0])
+            y_total.append(eachData[1])
+
+        x_total = np.stack(x_total)
+        y_total = np.stack(y_total)
+
+        whichLabelAbnormal = config["which_label_abnormal"]
+        y_total = np.where(y_total == whichLabelAbnormal, 1, 0)
+        
+        return x_total, y_total
 
 def touch_normal(dataSet,config,mode):
     
@@ -35,7 +56,7 @@ def touch_normal(dataSet,config,mode):
             
             if eachData[1] == normal_label:
                 x.append(eachData[0])
-                y.append(eachData[1])
+                y.append(0)
             
         x = np.stack(x)
         y= np.stack(y)
@@ -198,8 +219,8 @@ def convert_label_binary(label_tensor,config):
         
     elif config.get('normal_label') is None and config.get('which_label_abnormal') is not None:
         
-        normal_label = config['which_label_abnormal']
-        label_tensor = np.where(label_tensor==normal_label,1,0)
+        abnormal_label = config['which_label_abnormal']
+        label_tensor = np.where(label_tensor==abnormal_label,1,0)
         print('converting data into binary')
         return label_tensor
     
