@@ -414,8 +414,8 @@ class vanillaDsvddLoop:
         )
         saveMin = min(totalScores)
         saveMax = max(totalScores)
-        minMaxedScore = (totalScores - min(totalScores)) / (
-            max(totalScores) - min(totalScores)
+        minMaxedScore = (totalScores - saveMin) / (
+            saveMax - saveMin
         )
 
         averagePrecisionScore = average_precision_score(
@@ -429,7 +429,7 @@ class vanillaDsvddLoop:
         thresholdLst = [i / 1000 for i in range(1, 1000)]
         for eachThreshold in thresholdLst:
 
-            labelPred = np.where(totalScores >= eachThreshold, 1, 0)
+            labelPred = np.where(minMaxedScore >= eachThreshold, 1, 0)
 
             tn, fp, fn, tp = confusion_matrix(
                 y_true=totalLabelTrue, y_pred=labelPred
@@ -592,8 +592,8 @@ class vanillaDsvddLoop:
         )
         saveMin = min(totalScores)
         saveMax = max(totalScores)
-        minMaxedScore = (totalScores - min(totalScores)) / (
-            max(totalScores) - min(totalScores)
+        minMaxedScore = (totalScores - saveMin) / (
+            saveMax - saveMin
         )
 
         averagePrecisionScore = average_precision_score(
@@ -607,7 +607,7 @@ class vanillaDsvddLoop:
         thresholdLst = [i / 1000 for i in range(1, 1000)]
         for eachThreshold in thresholdLst:
 
-            labelPred = np.where(totalScores >= eachThreshold, 1, 0)
+            labelPred = np.where(minMaxedScore >= eachThreshold, 1, 0)
 
             tn, fp, fn, tp = confusion_matrix(
                 y_true=totalLabelTrue, y_pred=labelPred
