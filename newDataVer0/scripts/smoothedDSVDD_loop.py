@@ -544,7 +544,10 @@ class smoothedDsvddLoop:
 
         totalScoreLstTest = []
         totalLabelLstTest = []
-
+        
+        self.DSVDD_preAE.to(self.device)
+        self.DSVDD_preAE.eval()
+        
         self.DSVDD_model.to(self.device)
         self.DSVDD_model.eval()
 

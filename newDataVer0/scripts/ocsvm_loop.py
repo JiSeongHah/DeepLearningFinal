@@ -3,8 +3,9 @@ import numpy as np
 import sklearn
 from sklearn.svm import OneClassSVM
 import pickle
+from sklearn.model_selection import train_test_split
 
-
+from data_utils import change_data,check_and_normalize,dataSetToTensor,convert_label_binary,return_normal_only
 class ocsvmLoop:
     def __init__(self, config) -> None:
 
@@ -12,40 +13,19 @@ class ocsvmLoop:
 
     def runTrain(self, dataSet):
 
-        x_train = []
-        y_train = []
+        x_total, y_total = dataSetToTensor(dataSet=dataSet)
+        
+        y_total = convert_label_binary(label_tensor=y_total,config=self.config)
 
-        maxNum = 1000
-        flgDict = {}
-        for eachData in dataSet:
-            if eachData[1] not in flgDict.keys():
-                flgDict[eachData[1]] = 1
-                x_train.append(eachData[0])
-                y_train.append(eachData[1])
-            else:
-                if flgDict[eachData[1]] >= maxNum:
-                    print(f"appending label : {eachData[1]} reached maxNum : {maxNum}")
-                    continue
-                else:
-                    flgDict[eachData[1]] += 1
-                    x_train.append(eachData[0])
-                    y_train.append(eachData[1])
-
-        x_train = np.stack(x_train)
-
-        x_train_mean = np.mean(x_train)
-        x_train_std = np.std(x_train, ddof=1)
-
-        print(f"x_train_mena is : {x_train_mean} while x_train_std is : {x_train_std}")
-
-        x_train = (x_train - x_train_mean) / x_train_std
-
-        y_train = np.stack(y_train).reshape(-1, 1)
-
-        x_train = x_train + 0.1 * np.random.randn(*x_train.shape)
-
-        whichLabelAbnormal = self.config["which_label_abnormal"]
-        y_train = np.where(y_train == whichLabelAbnormal, 1, -1)
+        x_total = check_and_normalize(x_total,self.config)
+        
+        x_train, x_val, y_train, y_val = train_test_split(
+            x_total, y_total, test_size=0.2, random_state=42
+        )
+        
+        x_train, y_train = return_normal_only(x_train,y_train)
+        
+        y_val = np.where(y_val ==0 ,1, -1)
 
         kernel = self.config["ocsvm_kernel"]
 
@@ -55,18 +35,20 @@ class ocsvmLoop:
         self.ocsvmModel.fit(X=x_train, y=y_train)
         print(f"ocsvm training complete!!!")
 
-        y_pred = self.ocsvmModel.predict(x_train)
+        y_pred = self.ocsvmModel.predict(x_val)
 
-        deicisionFunction = self.ocsvmModel.decision_function(X=x_train)
+        deicisionFunction = self.ocsvmModel.decision_function(X=x_val)
 
         dec_max = np.max(deicisionFunction)
 
         y_anomaly_score = dec_max - deicisionFunction
+        
+        
 
         saveDict = {
             "ocsvm_model": self.ocsvmModel,
-            "x_train": x_train,
-            "y_train": y_train,
+            "x_train": x_val,
+            "y_train": y_val,
             "y_pred": y_pred,
             "y_anomaly_score": y_anomaly_score,
         }
@@ -77,38 +59,17 @@ class ocsvmLoop:
 
     def runTest(self, dataSet, loadedModel):
 
-        x_test = []
-        y_test = []
-
-        maxNum = 100000
-        flgDict = {}
-        for eachData in dataSet:
-            if eachData[1] not in flgDict.keys():
-                flgDict[eachData[1]] = 1
-                x_test.append(eachData[0])
-                y_test.append(eachData[1])
-            else:
-                if flgDict[eachData[1]] >= maxNum:
-                    print(f"appending label : {eachData[1]} reached maxNum : {maxNum}")
-                    continue
-                else:
-                    flgDict[eachData[1]] += 1
-                    x_test.append(eachData[0])
-                    y_test.append(eachData[1])
-
-        x_test = np.stack(x_test)
-        y_test = np.stack(y_test)
-
-        # x_test = x_test + np.random.randint(0,256,(x_test.shape))
-        x_test = (x_test - 0.131) / 0.309
-
-        whichLabelAbnormal = self.config["which_label_abnormal"]
-        y_test = np.where(y_test == whichLabelAbnormal, 1, -1)
+        x_test, y_test = change_data(dataSet=dataSet,config=self.config,mode='all')
+        
+        x_test = check_and_normalize(x_test,self.config)
+        
+        y_test = np.where(y_test == 0,1,-1)
 
         print("ocsvm model loading..")
         self.ocsvmModel = loadedModel["ocsvm_model"]
         print("loading saved ocsvm model complete")
         print("ocsvm test start...")
+        
         y_pred = self.ocsvmModel.predict(X=x_test)
 
         deicisionFunction = self.ocsvmModel.decision_function(X=x_test)

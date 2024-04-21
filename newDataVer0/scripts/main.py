@@ -19,8 +19,6 @@ class runLoop:
 
         self.configPath = configPath
 
-        
-
         self.loadedConfig = self.readConfig(self.configPath)
 
         now = datetime.now()

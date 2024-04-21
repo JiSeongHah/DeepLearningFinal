@@ -175,7 +175,7 @@ class denoisingDsvddLoop:
                 noise_ratio = self.config['noise_ratio']
                 bOutput = self.DSVDD_preAE(
                     bInput.float().to(self.device)
-                    + noise_ratio*torch.randn(bInput.size().to(self.device))
+                    + noise_ratio*torch.randn(bInput.size()).to(self.device)
                 ).cpu()
 
                 loss = self.calMSELoss(bOutput, answer)
@@ -550,7 +550,9 @@ class denoisingDsvddLoop:
 
         totalScoreLstTest = []
         totalLabelLstTest = []
-
+        
+        self.DSVDD_preAE.to(self.device)
+        self.DSVDD_preAE.eval()
         self.DSVDD_model.to(self.device)
         self.DSVDD_model.eval()
 

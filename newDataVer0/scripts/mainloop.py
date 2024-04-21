@@ -79,14 +79,14 @@ class MainLoop:
         
         assert whichModel in ["ssvdd", "ocsvm","vanilla_dsvdd","smoothed_dsvdd",'denoising_dsvdd']
 
-        if whichModel in ["ssvdd", "ocsvm"]:
+        if whichModel in ["ocsvm"]:
 
             y_pred = trainResult["y_pred"]
             y_anomaly_score = trainResult["y_anomaly_score"]
             y_train = trainResult["y_train"]
 
-            y_pred = np.where(y_pred == -1, 0, 1)
-            y_train = np.where(y_train == -1, 0, 1)
+            y_pred = np.where(y_pred == -1, 1, 0)
+            y_train = np.where(y_train == -1, 1, 0)
 
             tn, fp, fn, tp = confusion_matrix(y_pred=y_pred, y_true=y_train).ravel()
 
@@ -176,6 +176,12 @@ class MainLoop:
             model = ocsvmLoop(config=self.config)
         elif whichModel == "vanilla_dsvdd":
             model = vanillaDsvddLoop(config=self.config)
+        
+        elif whichModel == 'smoothed_dsvdd':
+            model = smoothedDsvddLoop(config=self.config)
+        
+        elif whichModel == 'denoising_dsvdd':
+            model = denoisingDsvddLoop(config=self.config)
 
         loadedModel = model.load_model()
 
@@ -188,14 +194,14 @@ class MainLoop:
     def testResultToConfig(self, testResult):
 
         whichModel = self.config["which_model"]
-        if whichModel in ["ssvdd", "ocsvm"]:
+        if whichModel in [ "ocsvm"]:
 
             y_pred = testResult["y_pred"]
             y_anomaly_score = testResult["y_anomaly_score"]
             y_test = testResult["y_test"]
 
-            y_pred = np.where(y_pred == -1, 0, 1)
-            y_test = np.where(y_test == -1, 0, 1)
+            y_pred = np.where(y_pred == -1, 1, 0)
+            y_test = np.where(y_test == -1, 1, 0)
 
             tn, fp, fn, tp = confusion_matrix(y_pred=y_pred, y_true=y_test).ravel()
 
@@ -227,7 +233,14 @@ class MainLoop:
 
             self.config["testResult"]["time"] = datetime.now()
 
-        elif whichModel == "vanilla_dsvdd":
+        elif whichModel in ["vanilla_dsvdd","smoothed_dsvdd",'denoising_dsvdd']:
+            from pprint import pprint
+            for i in range(10):
+                print('============================================================')
+                pprint(testResult)
+                print('')
+            
+            
             self.config["testResult"] = {}
             self.config["testResult"]["average_precision"] = str(
                 testResult["test_average_precision"][0]

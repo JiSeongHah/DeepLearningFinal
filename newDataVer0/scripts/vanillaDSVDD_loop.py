@@ -15,6 +15,8 @@ from sklearn.metrics import (
     precision_score,
     recall_score,
     f1_score,
+    precision_recall_curve,
+    roc_curve,
 )
 from vanillaDSVDD_model import naiveFCN, naivePreAutoEncoder
 from torch.utils.data import DataLoader
@@ -584,6 +586,8 @@ class vanillaDsvddLoop:
         
         uniqueLabel = np.unique(totalLabelTrue)
         check_key = np.sum(uniqueLabel)
+        for i in range(10):
+            print(f'check_key is {check_key}')
         if check_key != 1:
             raise Exception
 
@@ -595,11 +599,33 @@ class vanillaDsvddLoop:
         minMaxedScore = (totalScores - saveMin) / (
             saveMax - saveMin
         )
+        
+        import pickle
+        with open(os.path.join(self.config["modelSavePath"], "test.pkl"),'wb') as F:
+            pickle.dump([minMaxedScore,totalLabelTrue],F)
+        
+        tmp_precision, tmp_recall,tmp_thresholds= precision_recall_curve(y_true=totalLabelTrue,probas_pred=minMaxedScore)
+        
+        plt.plot(tmp_recall,tmp_precision)
+        plt.xlabel('recall')
+        plt.ylabel('precision')
+        plt.savefig(os.path.join(self.config["modelSavePath"], "prCurve.png"))
+        plt.cla()
+        plt.clf()
+        plt.close()
+        
+        fpr, tpr, thresholds = roc_curve(totalLabelTrue,minMaxedScore)
+        plt.plot(fpr,tpr)
+        plt.savefig(os.path.join(self.config["modelSavePath"], "rocCurve.png"))
+        plt.cla()
+        plt.clf()
+        plt.close()
+        
 
         averagePrecisionScore = average_precision_score(
-            y_true=totalLabelTrue, y_score=minMaxedScore
+            y_true=totalLabelTrue, y_score=totalScores
         )
-        rocAucScore = roc_auc_score(y_true=totalLabelTrue, y_score=minMaxedScore)
+        rocAucScore = roc_auc_score(y_true=totalLabelTrue, y_score=totalScores)
 
         fLst = []
         resultPerThresholdLst = []
