@@ -11,6 +11,7 @@ from pprint import pprint
 import yaml
 from mainloop import MainLoop
 from datetime import datetime
+import copy
 
 
 class runLoop:
@@ -19,13 +20,35 @@ class runLoop:
 
         self.configPath = configPath
 
-        self.loadedConfig = self.readConfig(self.configPath)
+        lst_loadedConfig = self.readConfig(self.configPath)
 
-        now = datetime.now()
-        self.savePath = os.path.join(savePath,self.loadedConfig['which_model']+'_', str(round(now.timestamp())))
-        os.makedirs(self.savePath)
-        
-        self.loadedConfig["modelSavePath"] = self.savePath
+        for data_type in lst_loadedConfig["data_type_lst"]:
+            for which_model in lst_loadedConfig["which_model_lst"]:
+                for normal_label in lst_loadedConfig["normal_label_lst"]:
+                    for noise_ratio in lst_loadedConfig["noise_ratio_lst"]:
+                        self.loadedConfig = copy.deepcopy(lst_loadedConfig)
+
+                        self.loadedConfig["data_type"] = data_type
+                        self.loadedConfig["which_model"] = which_model
+                        self.loadedConfig["normal_label"] = normal_label
+                        self.loadedConfig["noise_ratio"] = noise_ratio
+
+                        now = datetime.now()
+                        self.savePath = os.path.join(
+                            savePath,
+                            # self.loadedConfig["which_model"] + "_grad_FEedVer_test_testbed_zscore",
+                            self.loadedConfig["which_model"] + "_grad_test",
+                            self.loadedConfig["data_type"],
+                            "normal_label_" + str(self.loadedConfig["normal_label"]),
+                            f"noise_{noise_ratio}",
+                            str(round(now.timestamp())),
+                        )
+                        # self.savePath = os.path.join(savePath,self.loadedConfig['which_model']+'_grad_test',self.loadedConfig['data_type'],'normal_label_'+str(self.loadedConfig['normal_label']), str(round(now.timestamp())))
+                        os.makedirs(self.savePath)
+
+                        self.loadedConfig["modelSavePath"] = self.savePath
+
+                        self.run(doTestOnly=False)
 
     def copySaveResult(resultPath, savePath):
 
@@ -80,7 +103,7 @@ class runLoop:
 
 if __name__ == "__main__":
 
-    for i in range(10):
+    for i in range(2):
 
         configPath = "../configs/config.yaml"
 
@@ -88,4 +111,4 @@ if __name__ == "__main__":
 
         MAIN = runLoop(configPath, savePath=savePath)
 
-        MAIN.run(doTestOnly=False)
+        # MAIN.run(doTestOnly=False)

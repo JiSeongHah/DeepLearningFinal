@@ -3,6 +3,22 @@ import numpy as np
 from mySSVDD.ssvdd_train import ssvdd_train
 from mySSVDD.ssvdd_test import ssvdd_test
 import pickle
+from sklearn.model_selection import train_test_split
+from sklearn.metrics import (
+    roc_auc_score,
+    average_precision_score,
+    confusion_matrix,
+    precision_score,
+    recall_score,
+    f1_score,
+)
+from data_utils import (
+    change_data,
+    check_and_normalize,
+    dataSetToTensor,
+    convert_label_binary,
+    return_normal_only,
+)
 
 
 class sSVDDLoop:
@@ -13,41 +29,54 @@ class sSVDDLoop:
 
     def runTrain(self, dataSet):
 
-        x_train = []
-        y_train = []
+        # x_train = []
+        # y_train = []
 
-        maxNum = 1000
-        flgDict = {}
-        for eachData in dataSet:
-            if eachData[1] not in flgDict.keys():
-                flgDict[eachData[1]] = 1
-                x_train.append(eachData[0])
-                y_train.append(eachData[1])
-            else:
-                if flgDict[eachData[1]] >= maxNum:
-                    print(f"appending label : {eachData[1]} reached maxNum : {maxNum}")
-                    continue
-                else:
-                    flgDict[eachData[1]] += 1
-                    x_train.append(eachData[0])
-                    y_train.append(eachData[1])
+        # maxNum = 100000
+        # flgDict = {}
+        # for eachData in dataSet:
+        #     if eachData[1] not in flgDict.keys():
+        #         flgDict[eachData[1]] = 1
+        #         x_train.append(eachData[0])
+        #         y_train.append(eachData[1])
+        #     else:
+        #         if flgDict[eachData[1]] >= maxNum:
+        #             print(f"appending label : {eachData[1]} reached maxNum : {maxNum}")
+        #             continue
+        #         else:
+        #             flgDict[eachData[1]] += 1
+        #             x_train.append(eachData[0])
+        #             y_train.append(eachData[1])
 
-        x_train = np.stack(x_train)
+        # x_train = np.stack(x_train)
 
-        x_train_mean = np.mean(x_train)
-        x_train_std = np.std(x_train, ddof=1)
+        # x_train_mean = np.mean(x_train)
+        # x_train_std = np.std(x_train, ddof=1)
 
-        print(f"x_train_mena is : {x_train_mean} while x_train_std is : {x_train_std}")
+        # print(f"x_train_mena is : {x_train_mean} while x_train_std is : {x_train_std}")
 
-        x_train = (x_train - x_train_mean) / x_train_std
+        # x_train = (x_train - x_train_mean) / x_train_std
 
-        y_train = np.stack(y_train).reshape(-1, 1)
+        # y_train = np.stack(y_train).reshape(-1, 1)
 
+        # # x_train = x_train + 0.1 * np.random.randn(*x_train.shape)
         # x_train = x_train + 0.1 * np.random.randn(*x_train.shape)
-        x_train = x_train + 0.1 * np.random.randn(*x_train.shape)
 
-        whichLabelAbnormal = self.config["which_label_abnormal"]
-        y_train = np.where(y_train == whichLabelAbnormal, 1, -1)
+        x_total, y_total = dataSetToTensor(dataSet=dataSet)
+
+        y_total = convert_label_binary(label_tensor=y_total, config=self.config)
+
+        x_total = check_and_normalize(x_total, self.config)
+        y_total= y_total[:,np.newaxis]
+        
+        x_train, x_val, y_train, y_val = train_test_split(
+            x_total, y_total, test_size=0.95, random_state=42
+        )
+
+        # x_train, y_train = return_normal_only(x_train, y_train)
+        # print(x_train.shape,y_train.shape,777777777777777777)
+        # whichLabelAbnormal = self.config["which_label_abnormal"]
+        y_train = np.where(y_train == 0, -1, 1)
 
         iter = self.config["ssvdd_iter"]
         C = self.config["ssvdd_C"]
@@ -57,6 +86,26 @@ class sSVDDLoop:
         beta = self.config["ssvdd_beta"]
         psi = self.config["ssvdd_psi"]
         npt = self.config["ssvdd_npt"]
+        print(
+            type(C),
+            type(d),
+            type(eta),
+            type(kappa),
+            type(beta),
+            type(psi),
+            type(npt),
+            C,
+            d,
+            eta,
+            kappa,
+            beta,
+            psi,
+            npt,
+            type(x_train[0,0]),
+            type(y_train[:,0]),
+            print(x_train[0,:]),
+            print(y_train[:10,0])
+        )
 
         ssvdd_npt, ssvdd_models, ssvdd_Q = ssvdd_train(
             x_train=x_train,
@@ -72,7 +121,7 @@ class sSVDDLoop:
         )
 
         y_pred, y_anomaly_score = ssvdd_test(
-            x_train, y_train, ssvdd_models[-1], ssvdd_Q[-1], ssvdd_npt
+            x_val, y_val, ssvdd_models[-1], ssvdd_Q[-1], ssvdd_npt
         )
 
         saveDict = {
@@ -120,7 +169,7 @@ class sSVDDLoop:
         x_test = []
         y_test = []
 
-        maxNum = 1000
+        maxNum = 10000
         flgDict = {}
         for eachData in dataSet:
             if eachData[1] not in flgDict.keys():
@@ -138,13 +187,15 @@ class sSVDDLoop:
 
         x_test = np.stack(x_test)
         y_test = np.stack(y_test)
-
+        y_test= y_test[:,np.newaxis]
+        print(y_test.shape,321233333333333333333333)
         # x_test = x_test + np.random.randint(0,256,(x_test.shape))
-        x_test = (x_test - 0.131) / 0.309
-
-        whichLabelAbnormal = self.config["which_label_abnormal"]
-        y_test = np.where(y_test == whichLabelAbnormal, 1, -1)
-
+        x_test = check_and_normalize(x_test, self.config)
+        
+        y_test = convert_label_binary(label_tensor=y_test, config=self.config)
+        y_test = np.where(y_test == 0, -1, 1)
+        
+        
         ssvdd_npt = loadedModel["ssvdd_npt"]
         ssvdd_models = loadedModel["ssvdd_models"]
         ssvdd_Q = loadedModel["ssvdd_Q"]
@@ -168,32 +219,33 @@ class sSVDDLoop:
     def testStepEnd(self):
         pass
 
+if __name__ == '__main__':
+    x_train = np.random.randn(5000,768)
+    print(x_train.shape)
+    print(x_train[:,1])
+    y_train = np.random.randint(0,2,(5000,1))
+    print(y_train.shape)
+    y_train = np.where(y_train==0,-1,1)
+    iter = 30
+    C = 0.1
+    d = 16
+    eta = 0.1
+    kappa = 0.8
+    beta = 0.01
+    psi = 4
+    npt = 1
+    import os
 
-# x_train = np.random.randn(512,128)
-# print(x_train.shape)
-# y_train = np.random.randint(0,2,(512,1))
-# print(y_train.shape)
-# y_train = np.where(y_train==0,-1,1)
-# iter = 30
-# C = 0.1
-# d = 16
-# eta = 0.1
-# kappa = 0.8
-# beta = 0.01
-# psi = 4
-# npt = 1
-# import os
-
-# print(os.getcwd())
+    print(os.getcwd())
 
 
-# model = ssvdd_train(x_train = x_train,
-#                     y_train = y_train,
-#                     iter = iter,
-#                     C = C,
-#                     d = d,
-#                     eta= eta,
-#                     kappa= kappa,
-#                     beta= beta,
-#                     psi = psi,
-#                     npt= npt)
+    model = ssvdd_train(x_train = x_train,
+                        y_train = y_train,
+                        iter = iter,
+                        C = C,
+                        d = d,
+                        eta= eta,
+                        kappa= kappa,
+                        beta= beta,
+                        psi = psi,
+                        npt= npt)

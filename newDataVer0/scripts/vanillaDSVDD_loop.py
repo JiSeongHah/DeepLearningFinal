@@ -18,15 +18,21 @@ from sklearn.metrics import (
     precision_recall_curve,
     roc_curve,
 )
+from joblib import dump, load 
 from vanillaDSVDD_model import naiveFCN, naivePreAutoEncoder
 from torch.utils.data import DataLoader
 from sklearn.model_selection import train_test_split
 import copy
 import os
 
-from data_utils import change_data,check_and_normalize,dataSetToTensor,convert_label_binary,return_normal_only
-
-
+from data_utils import (
+    change_data,
+    check_and_normalize,
+    dataSetToTensor,
+    convert_label_binary,
+    return_normal_only,
+    dataSetToTensor_testbed
+)
 
 
 class vanillaDsvddLoop:
@@ -94,18 +100,43 @@ class vanillaDsvddLoop:
             self.DSVDD_preAE.parameters(), lr=3e-4, weight_decay=0.5e-3
         )
         
-        x_total, y_total = dataSetToTensor(dataSet=dataSet)
+        FEed_testBed_dataLst = [f'FEed_800_0_noiseRatio_{round(0.1*i,1)}' for i in range(10)]+[f'FEed_800_45_noiseRatio_{round(0.1*i,1)}' for i in range(10)]
         
-        y_total = convert_label_binary(label_tensor=y_total,config=self.config)
+        
+        if self.config['data_type'] in [f'800_0_noiseRatio_{round(0.1*i,1)}' for i in range(10)]+[f'800_45_noiseRatio_{round(0.1*i,1)}' for i in range(10)]:
+            
+            x_train,x_val,y_train,y_val = dataSetToTensor_testbed(dataSet=dataSet,isTrain=True)
+            
+        elif self.config['data_type'] in FEed_testBed_dataLst:
+            
+            x_train,x_val,y_train,y_val = dataSetToTensor_testbed(dataSet=dataSet,isTrain=True)
+            
+            whichData_1 = self.config["data_type"]
+            dataName_1 = whichData_1.split("_noiseRatio_")[0]
+            actualNoise_1 = whichData_1.split("noiseRatio_")[-1]
+            
+            if self.config['do_zScore']:
+                self.scaler = load(
+                    f'/home/asdflkj3123/mainDir/forUni/theDir1/DeepLearningFinal/newDataVer0/scripts/800_Testbed/pkled_data/FEed_data/{whichData_1}/trainVal_{dataName_1}_noised_{actualNoise_1}_scaler.joblib'
+                )
+                
+                x_train = self.scaler.transform(x_train)
+                x_val = self.scaler.transform(x_val)
+        
+        else:
 
-        x_total = check_and_normalize(x_total,self.config)
-        
-        x_train, x_val, y_train, y_val = train_test_split(
-            x_total, y_total, test_size=0.2, random_state=42
-        )
-        
-        x_train, y_train = return_normal_only(x_train,y_train)
-        
+            x_total, y_total = dataSetToTensor(dataSet=dataSet)
+
+            y_total = convert_label_binary(label_tensor=y_total, config=self.config)
+
+            x_total = check_and_normalize(x_total, self.config)
+
+            x_train, x_val, y_train, y_val = train_test_split(
+                x_total, y_total, test_size=0.2, random_state=42
+            )
+
+            x_train, y_train = return_normal_only(x_train, y_train)
+
         for eachEpoch in range(self.config["preAE_epoch"]):
             self.trainPreAE(
                 aeTrainDataSet=(copy.deepcopy(x_train), copy.deepcopy(y_train))
@@ -235,7 +266,9 @@ class vanillaDsvddLoop:
 
         print("transferring weight of auto encoder to main model")
 
-        self.DSVDD_model.load_state_dict(self.DSVDD_preAE.state_dict(), strict=False)
+        self.DSVDD_model.load_state_dict(
+            copy.deepcopy(self.DSVDD_preAE.state_dict()), strict=False
+        )
         print("transferring weight of auto encoder to main model complete !!!")
 
     def setCentre(self, normalDataSet):
@@ -301,6 +334,10 @@ class vanillaDsvddLoop:
 
         self.DSVDD_preAE.to(self.device)
         self.DSVDD_preAE.eval()
+
+        for para in self.DSVDD_preAE.parameters():
+            print(para)
+            para.requires_grad = False
 
         self.DSVDD_model.to(self.device)
         self.DSVDD_model.train()
@@ -404,21 +441,18 @@ class vanillaDsvddLoop:
 
         print(f"shape of label : {totalLabelTrue.shape}")
         print(f"shape of score : {totalScores.shape}")
-        
+
         uniqueLabel = np.unique(totalLabelTrue)
         check_key = np.sum(uniqueLabel)
         if check_key != 1:
             raise Exception
-         
 
         print(
             f"min Score is : {min(totalScores)} while max Score is : {max(totalScores)}"
         )
         saveMin = min(totalScores)
         saveMax = max(totalScores)
-        minMaxedScore = (totalScores - saveMin) / (
-            saveMax - saveMin
-        )
+        minMaxedScore = (totalScores - saveMin) / (saveMax - saveMin)
 
         averagePrecisionScore = average_precision_score(
             y_true=totalLabelTrue, y_score=minMaxedScore
@@ -511,11 +545,35 @@ class vanillaDsvddLoop:
         self.AEoptim = AdamW(
             self.DSVDD_preAE.parameters(), lr=3e-4, weight_decay=0.5e-3
         )
+        
+        FEed_testBed_dataLst = [f'FEed_800_0_noiseRatio_{round(0.1*i,1)}' for i in range(10)]+[f'FEed_800_45_noiseRatio_{round(0.1*i,1)}' for i in range(10)]
+        
+        if self.config['data_type'] in [f'800_0_noiseRatio_{round(0.1*i,1)}' for i in range(10)]+[f'800_45_noiseRatio_{round(0.1*i,1)}' for i in range(10)]:
+            
+            x_test,y_test = dataSetToTensor_testbed(dataSet=dataSet,isTrain=False)
+            
+        elif self.config['data_type'] in FEed_testBed_dataLst:
+            
+            x_test,y_test = dataSetToTensor_testbed(dataSet=dataSet,isTrain=False)
+            
+            whichData = self.config["data_type"]
+            dataName = whichData.split("_noiseRatio_")[0]
+            actualNoise = whichData.split("noiseRatio_")[-1]
+            
+            if self.config['do_zScore']:
+                self.scaler = load(
+                    f'/home/asdflkj3123/mainDir/forUni/theDir1/DeepLearningFinal/newDataVer0/scripts/800_Testbed/pkled_data/FEed_data/{whichData}/trainVal_{dataName}_noised_{actualNoise}_scaler.joblib'
+                )
+                
+                x_test = self.scaler.transform(x_test)
+                
+        
+        else:
+        
+            x_test, y_test = change_data(dataSet=dataSet, config=self.config, mode="all")
 
-        x_test, y_test = change_data(dataSet=dataSet,config=self.config,mode='all')
-        
-        x_test = check_and_normalize(x_test,self.config)
-        
+            x_test = check_and_normalize(x_test, self.config)
+
         cSavePath = os.path.join(self.config["modelSavePath"], "models/center")
         self.centre = torch.tensor(np.load(os.path.join(cSavePath, "cSave.npy")))
 
@@ -583,11 +641,11 @@ class vanillaDsvddLoop:
 
         print(f"shape of label : {totalLabelTrue.shape}")
         print(f"shape of score : {totalScores.shape}")
-        
+
         uniqueLabel = np.unique(totalLabelTrue)
         check_key = np.sum(uniqueLabel)
         for i in range(10):
-            print(f'check_key is {check_key}')
+            print(f"check_key is {check_key}")
         if check_key != 1:
             raise Exception
 
@@ -596,31 +654,31 @@ class vanillaDsvddLoop:
         )
         saveMin = min(totalScores)
         saveMax = max(totalScores)
-        minMaxedScore = (totalScores - saveMin) / (
-            saveMax - saveMin
-        )
-        
+        minMaxedScore = (totalScores - saveMin) / (saveMax - saveMin)
+
         import pickle
-        with open(os.path.join(self.config["modelSavePath"], "test.pkl"),'wb') as F:
-            pickle.dump([minMaxedScore,totalLabelTrue],F)
-        
-        tmp_precision, tmp_recall,tmp_thresholds= precision_recall_curve(y_true=totalLabelTrue,probas_pred=minMaxedScore)
-        
-        plt.plot(tmp_recall,tmp_precision)
-        plt.xlabel('recall')
-        plt.ylabel('precision')
+
+        with open(os.path.join(self.config["modelSavePath"], "test.pkl"), "wb") as F:
+            pickle.dump([minMaxedScore, totalLabelTrue], F)
+
+        tmp_precision, tmp_recall, tmp_thresholds = precision_recall_curve(
+            y_true=totalLabelTrue, probas_pred=minMaxedScore
+        )
+
+        plt.plot(tmp_recall, tmp_precision)
+        plt.xlabel("recall")
+        plt.ylabel("precision")
         plt.savefig(os.path.join(self.config["modelSavePath"], "prCurve.png"))
         plt.cla()
         plt.clf()
         plt.close()
-        
-        fpr, tpr, thresholds = roc_curve(totalLabelTrue,minMaxedScore)
-        plt.plot(fpr,tpr)
+
+        fpr, tpr, thresholds = roc_curve(totalLabelTrue, minMaxedScore)
+        plt.plot(fpr, tpr)
         plt.savefig(os.path.join(self.config["modelSavePath"], "rocCurve.png"))
         plt.cla()
         plt.clf()
         plt.close()
-        
 
         averagePrecisionScore = average_precision_score(
             y_true=totalLabelTrue, y_score=totalScores

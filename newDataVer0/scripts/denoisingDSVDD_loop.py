@@ -21,8 +21,15 @@ from torch.utils.data import DataLoader
 from sklearn.model_selection import train_test_split
 import copy
 import os
-
-from data_utils import change_data,check_and_normalize,dataSetToTensor,convert_label_binary,return_normal_only
+from joblib import dump, load 
+from data_utils import (
+    change_data,
+    check_and_normalize,
+    dataSetToTensor,
+    convert_label_binary,
+    return_normal_only,
+    dataSetToTensor_testbed
+)
 
 
 class denoisingDsvddLoop:
@@ -89,18 +96,43 @@ class denoisingDsvddLoop:
         self.AEoptim = AdamW(
             self.DSVDD_preAE.parameters(), lr=3e-4, weight_decay=0.5e-3
         )
+        
+        FEed_testBed_dataLst = [f'FEed_800_0_noiseRatio_{round(0.1*i,1)}' for i in range(10)]+[f'FEed_800_45_noiseRatio_{round(0.1*i,1)}' for i in range(10)]
+        
+        if self.config['data_type'] in [f'800_0_noiseRatio_{round(0.1*i,1)}' for i in range(10)]+[f'800_45_noiseRatio_{round(0.1*i,1)}' for i in range(10)]:
+            
+            x_train,x_val,y_train,y_val = dataSetToTensor_testbed(dataSet=dataSet,isTrain=True)
+            
+        elif self.config['data_type'] in FEed_testBed_dataLst:
+            
+            x_train,x_val,y_train,y_val = dataSetToTensor_testbed(dataSet=dataSet,isTrain=True)
+            
+            whichData_1 = self.config["data_type"]
+            dataName_1 = whichData_1.split("_noiseRatio_")[0]
+            actualNoise_1 = whichData_1.split("noiseRatio_")[-1]
+            
+            if self.config['do_zScore']:
+                self.scaler = load(
+                    f'/home/asdflkj3123/mainDir/forUni/theDir1/DeepLearningFinal/newDataVer0/scripts/800_Testbed/pkled_data/FEed_data/{whichData_1}/trainVal_{dataName_1}_noised_{actualNoise_1}_scaler.joblib'
+                )
+                
+                x_train = self.scaler.transform(x_train)
+                x_val = self.scaler.transform(x_val)
+            
+            
+        else:
 
-        x_total, y_total = dataSetToTensor(dataSet=dataSet)
-        
-        y_total = convert_label_binary(label_tensor=y_total,config=self.config)
+            x_total, y_total = dataSetToTensor(dataSet=dataSet)
 
-        x_total = check_and_normalize(x_total,self.config)
-        
-        x_train, x_val, y_train, y_val = train_test_split(
-            x_total, y_total, test_size=0.2, random_state=42
-        )
-        
-        x_train, y_train = return_normal_only(x_train,y_train)
+            y_total = convert_label_binary(label_tensor=y_total, config=self.config)
+
+            x_total = check_and_normalize(x_total, self.config)
+
+            x_train, x_val, y_train, y_val = train_test_split(
+                x_total, y_total, test_size=0.2, random_state=42
+            )
+
+            x_train, y_train = return_normal_only(x_train, y_train)
 
         for eachEpoch in range(self.config["preAE_epoch"]):
             self.trainPreAE(
@@ -133,7 +165,6 @@ class denoisingDsvddLoop:
 
         return save_dict
 
-    
     def calMSELoss(self, output, label, reduction="mean"):
 
         loss = nn.MSELoss(reduction=reduction)
@@ -172,10 +203,10 @@ class denoisingDsvddLoop:
 
                 answer = bInput.clone().detach().float()
 
-                noise_ratio = self.config['noise_ratio']
+                noise_ratio = self.config["noise_ratio"]
                 bOutput = self.DSVDD_preAE(
                     bInput.float().to(self.device)
-                    + noise_ratio*torch.randn(bInput.size()).to(self.device)
+                    + noise_ratio * torch.randn(bInput.size()).to(self.device)
                 ).cpu()
 
                 loss = self.calMSELoss(bOutput, answer)
@@ -236,7 +267,9 @@ class denoisingDsvddLoop:
 
         print("transferring weight of auto encoder to main model")
 
-        self.DSVDD_model.load_state_dict(self.DSVDD_preAE.state_dict(), strict=False)
+        self.DSVDD_model.load_state_dict(
+            copy.deepcopy(self.DSVDD_preAE.state_dict()), strict=False
+        )
         print("transferring weight of auto encoder to main model complete !!!")
 
     def setCentre(self, normalDataSet):
@@ -302,6 +335,10 @@ class denoisingDsvddLoop:
 
         self.DSVDD_preAE.to(self.device)
         self.DSVDD_preAE.eval()
+
+        for para in self.DSVDD_preAE.parameters():
+            
+            para.requires_grad = False
 
         self.DSVDD_model.to(self.device)
         self.DSVDD_model.train()
@@ -386,11 +423,11 @@ class denoisingDsvddLoop:
                 bInput, bLabel = totalBInput
 
                 self.Modeloptim.zero_grad()
-                
+
                 bInput = self.DSVDD_preAE(bInput.float().to(self.device)).cpu()
-
+                
                 bOutput = self.DSVDD_model(bInput.float().to(self.device)).cpu()
-
+                
                 eachScore = self.calMSELoss(
                     bOutput, self.centre.repeat(bOutput.size(0), 1), reduction="none"
                 )
@@ -410,21 +447,20 @@ class denoisingDsvddLoop:
 
         print(f"shape of label : {totalLabelTrue.shape}")
         print(f"shape of score : {totalScores.shape}")
-        
+
         uniqueLabel = np.unique(totalLabelTrue)
         check_key = np.sum(uniqueLabel)
         if check_key != 1:
             raise Exception
-
+        
+        
         print(
             f"min Score is : {min(totalScores)} while max Score is : {max(totalScores)}"
         )
         saveMin = min(totalScores)
         saveMax = max(totalScores)
-        minMaxedScore = (totalScores - saveMin) / (
-            saveMax - saveMin
-        )
-
+        minMaxedScore = (totalScores - saveMin) / (saveMax - saveMin)
+        
         averagePrecisionScore = average_precision_score(
             y_true=totalLabelTrue, y_score=minMaxedScore
         )
@@ -445,6 +481,7 @@ class denoisingDsvddLoop:
             precisionScore = precision_score(y_true=totalLabelTrue, y_pred=labelPred)
             recallScore = recall_score(y_true=totalLabelTrue, y_pred=labelPred)
             f1Score = f1_score(y_true=totalLabelTrue, y_pred=labelPred)
+            
             fLst.append(f1Score)
             resultPerThresholdLst.append(
                 [eachThreshold, tn, fp, fn, tp, precisionScore, recallScore, f1Score]
@@ -516,10 +553,33 @@ class denoisingDsvddLoop:
         self.AEoptim = AdamW(
             self.DSVDD_preAE.parameters(), lr=3e-4, weight_decay=0.5e-3
         )
-
-        x_test, y_test = change_data(dataSet=dataSet,config=self.config,mode='all')
         
-        x_test = check_and_normalize(x_test,self.config)
+        FEed_testBed_dataLst = [f'FEed_800_0_noiseRatio_{round(0.1*i,1)}' for i in range(10)]+[f'FEed_800_45_noiseRatio_{round(0.1*i,1)}' for i in range(10)]
+        
+        if self.config['data_type'] in [f'800_0_noiseRatio_{round(0.1*i,1)}' for i in range(10)]+[f'800_45_noiseRatio_{round(0.1*i,1)}' for i in range(10)]:
+            
+            x_test,y_test = dataSetToTensor_testbed(dataSet=dataSet,isTrain=False)
+            
+        elif self.config['data_type'] in FEed_testBed_dataLst:
+            
+            x_test,y_test = dataSetToTensor_testbed(dataSet=dataSet,isTrain=False)
+            
+            whichData = self.config["data_type"]
+            dataName = whichData.split("_noiseRatio_")[0]
+            actualNoise = whichData.split("noiseRatio_")[-1]
+            
+            self.scaler = load(
+                f'/home/asdflkj3123/mainDir/forUni/theDir1/DeepLearningFinal/newDataVer0/scripts/800_Testbed/pkled_data/FEed_data/{whichData}/trainVal_{dataName}_noised_{actualNoise}_scaler.joblib'
+            )
+            
+            x_test = self.scaler.transform(x_test)
+            
+            
+        else:
+            
+            x_test, y_test = change_data(dataSet=dataSet, config=self.config, mode="all")
+
+            x_test = check_and_normalize(x_test, self.config)
 
         cSavePath = os.path.join(self.config["modelSavePath"], "models/center")
         self.centre = torch.tensor(np.load(os.path.join(cSavePath, "cSave.npy")))
@@ -550,7 +610,7 @@ class denoisingDsvddLoop:
 
         totalScoreLstTest = []
         totalLabelLstTest = []
-        
+
         self.DSVDD_preAE.to(self.device)
         self.DSVDD_preAE.eval()
         self.DSVDD_model.to(self.device)
@@ -565,13 +625,10 @@ class denoisingDsvddLoop:
                 bInput, bLabel = totalBInput
 
                 self.Modeloptim.zero_grad()
-                
+
                 bInput = self.DSVDD_preAE(bInput.float().to(self.device)).cpu()
 
                 bOutput = self.DSVDD_model(bInput.float().to(self.device)).cpu()
-
-                for i in range(10):
-                    print(bOutput.size(), self.centre.shape)
 
                 eachScore = self.calMSELoss(
                     bOutput, self.centre.repeat(bOutput.size(0), 1), reduction="none"
@@ -592,7 +649,7 @@ class denoisingDsvddLoop:
 
         print(f"shape of label : {totalLabelTrue.shape}")
         print(f"shape of score : {totalScores.shape}")
-        
+
         uniqueLabel = np.unique(totalLabelTrue)
         check_key = np.sum(uniqueLabel)
         if check_key != 1:
@@ -603,15 +660,14 @@ class denoisingDsvddLoop:
         )
         saveMin = min(totalScores)
         saveMax = max(totalScores)
-        minMaxedScore = (totalScores - saveMin) / (
-            saveMax - saveMin
-        )
-
+        minMaxedScore = (totalScores - saveMin) / (saveMax - saveMin)
+        
         averagePrecisionScore = average_precision_score(
             y_true=totalLabelTrue, y_score=minMaxedScore
         )
         rocAucScore = roc_auc_score(y_true=totalLabelTrue, y_score=minMaxedScore)
-
+        
+            
         fLst = []
         resultPerThresholdLst = []
 
@@ -701,8 +757,3 @@ class denoisingDsvddLoop:
         print("saving MainModel weight complete!")
 
         return {"pre_ae": DSVDD_preAE, "main_model": DSVDD_model}
-    
-
-
-                
-                

@@ -4,28 +4,62 @@ import sklearn
 from sklearn.svm import OneClassSVM
 import pickle
 from sklearn.model_selection import train_test_split
+from joblib import dump, load 
+from data_utils import (
+    change_data,
+    check_and_normalize,
+    dataSetToTensor,
+    convert_label_binary,
+    return_normal_only,
+    dataSetToTensor_testbed
+)
 
-from data_utils import change_data,check_and_normalize,dataSetToTensor,convert_label_binary,return_normal_only
+
 class ocsvmLoop:
     def __init__(self, config) -> None:
 
         self.config = config
 
     def runTrain(self, dataSet):
+        
+        FEed_testBed_dataLst = [f'FEed_800_0_noiseRatio_{round(0.1*i,1)}' for i in range(10)]+[f'FEed_800_45_noiseRatio_{round(0.1*i,1)}' for i in range(10)]
+        
+        if self.config['data_type'] in [f'800_0_noiseRatio_{round(0.1*i,1)}' for i in range(10)]+[f'800_45_noiseRatio_{round(0.1*i,1)}' for i in range(10)]:
+            
+            x_train,x_val,y_train,y_val = dataSetToTensor_testbed(dataSet=dataSet,isTrain=True)
+            
+        elif self.config['data_type'] in FEed_testBed_dataLst:
+            
+            x_train,x_val,y_train,y_val = dataSetToTensor_testbed(dataSet=dataSet,isTrain=True)
+            
+            whichData = self.config["data_type"]
+            dataName = whichData.split("_noiseRatio_")[0]
+            actualNoise = whichData.split("noiseRatio_")[-1]
+            
+            if self.config['do_zScore']:
+                self.scaler = load(
+                    f'/home/asdflkj3123/mainDir/forUni/theDir1/DeepLearningFinal/newDataVer0/scripts/800_Testbed/pkled_data/FEed_data/{whichData}/trainVal_{dataName}_noised_{actualNoise}_scaler.joblib'
+                )
+                
+                x_train = self.scaler.transform(x_train)
+                x_val = self.scaler.transform(x_val)
+            
+            
+        else:
 
-        x_total, y_total = dataSetToTensor(dataSet=dataSet)
-        
-        y_total = convert_label_binary(label_tensor=y_total,config=self.config)
+            x_total, y_total = dataSetToTensor(dataSet=dataSet)
 
-        x_total = check_and_normalize(x_total,self.config)
-        
-        x_train, x_val, y_train, y_val = train_test_split(
-            x_total, y_total, test_size=0.2, random_state=42
-        )
-        
-        x_train, y_train = return_normal_only(x_train,y_train)
-        
-        y_val = np.where(y_val ==0 ,1, -1)
+            y_total = convert_label_binary(label_tensor=y_total, config=self.config)
+
+            x_total = check_and_normalize(x_total, self.config)
+
+            x_train, x_val, y_train, y_val = train_test_split(
+                x_total, y_total, test_size=0.2, random_state=42
+            )
+
+            x_train, y_train = return_normal_only(x_train, y_train)
+
+        # y_val = np.where(y_val == 0 ,1, -1)
 
         kernel = self.config["ocsvm_kernel"]
 
@@ -37,13 +71,14 @@ class ocsvmLoop:
 
         y_pred = self.ocsvmModel.predict(x_val)
 
+        y_pred = np.where(y_pred == 1, 0, -1)
+        y_pred = np.where(y_pred == -1, 1, 0)
+
         deicisionFunction = self.ocsvmModel.decision_function(X=x_val)
 
         dec_max = np.max(deicisionFunction)
 
         y_anomaly_score = dec_max - deicisionFunction
-        
-        
 
         saveDict = {
             "ocsvm_model": self.ocsvmModel,
@@ -58,19 +93,46 @@ class ocsvmLoop:
         return saveDict
 
     def runTest(self, dataSet, loadedModel):
+        
+        FEed_testBed_dataLst = [f'FEed_800_0_noiseRatio_{round(0.1*i,1)}' for i in range(10)]+[f'FEed_800_45_noiseRatio_{round(0.1*i,1)}' for i in range(10)]
+        
+        if self.config['data_type'] in [f'800_0_noiseRatio_{round(0.1*i,1)}' for i in range(10)]+[f'800_45_noiseRatio_{round(0.1*i,1)}' for i in range(10)]:
+            
+            x_test,y_test = dataSetToTensor_testbed(dataSet=dataSet,isTrain=False)
+            
+        elif self.config['data_type'] in FEed_testBed_dataLst:
+            
+            x_test,y_test = dataSetToTensor_testbed(dataSet=dataSet,isTrain=False)
+            
+            whichData = self.config["data_type"]
+            dataName = whichData.split("_noiseRatio_")[0]
+            actualNoise = whichData.split("noiseRatio_")[-1]
+            
+            if self.config['do_zScore']:
+                self.scaler = load(
+                    f'/home/asdflkj3123/mainDir/forUni/theDir1/DeepLearningFinal/newDataVer0/scripts/800_Testbed/pkled_data/FEed_data/{whichData}/trainVal_{dataName}_noised_{actualNoise}_scaler.joblib'
+                )
+                
+                x_test = self.scaler.transform(x_test)
+                
+            
+        else:
 
-        x_test, y_test = change_data(dataSet=dataSet,config=self.config,mode='all')
-        
-        x_test = check_and_normalize(x_test,self.config)
-        
-        y_test = np.where(y_test == 0,1,-1)
+            x_test, y_test = change_data(dataSet=dataSet, config=self.config, mode="all")
+
+            x_test = check_and_normalize(x_test, self.config)
+
+        # y_test = np.where(y_test == 0,1,-1)
 
         print("ocsvm model loading..")
         self.ocsvmModel = loadedModel["ocsvm_model"]
         print("loading saved ocsvm model complete")
         print("ocsvm test start...")
-        
+
         y_pred = self.ocsvmModel.predict(X=x_test)
+        
+        y_pred = np.where(y_pred == 1, 0, -1)
+        y_pred = np.where(y_pred == -1, 1, 0)
 
         deicisionFunction = self.ocsvmModel.decision_function(X=x_test)
 

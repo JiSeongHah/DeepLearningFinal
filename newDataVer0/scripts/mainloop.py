@@ -58,11 +58,11 @@ class MainLoop:
 
         elif whichModel == "vanilla_dsvdd":
             model = vanillaDsvddLoop(config=self.config)
-            
-        elif whichModel == 'smoothed_dsvdd':
+
+        elif whichModel == "smoothed_dsvdd":
             model = smoothedDsvddLoop(config=self.config)
-        
-        elif whichModel == 'denoising_dsvdd':
+
+        elif whichModel == "denoising_dsvdd":
             model = denoisingDsvddLoop(config=self.config)
 
         trainResult = model.runTrain(dataSet=trainDataSet)
@@ -74,10 +74,16 @@ class MainLoop:
         return trainResult
 
     def trainResultToConfig(self, trainResult):
-        
+
         whichModel = self.config["which_model"]
-        
-        assert whichModel in ["ssvdd", "ocsvm","vanilla_dsvdd","smoothed_dsvdd",'denoising_dsvdd']
+
+        assert whichModel in [
+            "ssvdd",
+            "ocsvm",
+            "vanilla_dsvdd",
+            "smoothed_dsvdd",
+            "denoising_dsvdd",
+        ]
 
         if whichModel in ["ocsvm"]:
 
@@ -85,8 +91,8 @@ class MainLoop:
             y_anomaly_score = trainResult["y_anomaly_score"]
             y_train = trainResult["y_train"]
 
-            y_pred = np.where(y_pred == -1, 1, 0)
-            y_train = np.where(y_train == -1, 1, 0)
+            # y_pred = np.where(y_pred == -1, 1, 0)
+            # y_train = np.where(y_train == -1, 1, 0)
 
             tn, fp, fn, tp = confusion_matrix(y_pred=y_pred, y_true=y_train).ravel()
 
@@ -118,7 +124,7 @@ class MainLoop:
 
             self.config["trainResult"]["time"] = datetime.now()
 
-        elif whichModel in ["vanilla_dsvdd","smoothed_dsvdd",'denoising_dsvdd']:
+        elif whichModel in ["vanilla_dsvdd", "smoothed_dsvdd", "denoising_dsvdd"]:
             from pprint import pprint
 
             for i in range(10):
@@ -127,7 +133,7 @@ class MainLoop:
                 pprint("")
                 pprint("")
             self.config["trainResult"] = {}
-            
+
             self.config["trainResult"]["ae_trian_loss"] = {
                 f"epoch_{idx}": str(i)
                 for idx, i in enumerate(trainResult["ae_train_loss"])
@@ -176,11 +182,11 @@ class MainLoop:
             model = ocsvmLoop(config=self.config)
         elif whichModel == "vanilla_dsvdd":
             model = vanillaDsvddLoop(config=self.config)
-        
-        elif whichModel == 'smoothed_dsvdd':
+
+        elif whichModel == "smoothed_dsvdd":
             model = smoothedDsvddLoop(config=self.config)
-        
-        elif whichModel == 'denoising_dsvdd':
+
+        elif whichModel == "denoising_dsvdd":
             model = denoisingDsvddLoop(config=self.config)
 
         loadedModel = model.load_model()
@@ -194,14 +200,14 @@ class MainLoop:
     def testResultToConfig(self, testResult):
 
         whichModel = self.config["which_model"]
-        if whichModel in [ "ocsvm"]:
+        if whichModel in ["ocsvm"]:
 
             y_pred = testResult["y_pred"]
             y_anomaly_score = testResult["y_anomaly_score"]
             y_test = testResult["y_test"]
 
-            y_pred = np.where(y_pred == -1, 1, 0)
-            y_test = np.where(y_test == -1, 1, 0)
+            # y_pred = np.where(y_pred == -1, 1, 0)
+            # y_test = np.where(y_test == -1, 1, 0)
 
             tn, fp, fn, tp = confusion_matrix(y_pred=y_pred, y_true=y_test).ravel()
 
@@ -233,14 +239,14 @@ class MainLoop:
 
             self.config["testResult"]["time"] = datetime.now()
 
-        elif whichModel in ["vanilla_dsvdd","smoothed_dsvdd",'denoising_dsvdd']:
+        elif whichModel in ["vanilla_dsvdd", "smoothed_dsvdd", "denoising_dsvdd"]:
             from pprint import pprint
+
             for i in range(10):
-                print('============================================================')
+                print("============================================================")
                 pprint(testResult)
-                print('')
-            
-            
+                print("")
+
             self.config["testResult"] = {}
             self.config["testResult"]["average_precision"] = str(
                 testResult["test_average_precision"][0]
