@@ -19,6 +19,12 @@ class ocsvmLoop:
     def __init__(self, config) -> None:
 
         self.config = config
+        
+        self.testBest_intervalLst= []
+        intervalLst = [128,256,512,1024,2048,4096]
+        for interval in intervalLst:
+            self.testBest_intervalLst.extend([f'800_0_interval_{interval}_noiseRatio_{round(0.1*i,1)}' for i in range(10)])
+            self.testBest_intervalLst.extend([f'800_45_interval_{interval}_noiseRatio_{round(0.1*i,1)}' for i in range(10)])
 
     def runTrain(self, dataSet):
         
@@ -43,7 +49,10 @@ class ocsvmLoop:
                 
                 x_train = self.scaler.transform(x_train)
                 x_val = self.scaler.transform(x_val)
+                
+        elif self.config['data_type'] in self.testBest_intervalLst:
             
+            x_train,x_val,y_train,y_val = dataSetToTensor_testbed(dataSet=dataSet,isTrain=True)
             
         else:
 
@@ -115,7 +124,10 @@ class ocsvmLoop:
                 
                 x_test = self.scaler.transform(x_test)
                 
+        elif self.config['data_type'] in self.testBest_intervalLst:
             
+            x_test,y_test = dataSetToTensor_testbed(dataSet=dataSet,isTrain=False)
+                
         else:
 
             x_test, y_test = change_data(dataSet=dataSet, config=self.config, mode="all")

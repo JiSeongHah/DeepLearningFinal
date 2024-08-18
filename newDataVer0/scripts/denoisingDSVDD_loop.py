@@ -64,6 +64,12 @@ class denoisingDsvddLoop:
         self.test_averagePrecisionLst = []
         self.test_rocAucLst = []
         self.test_f_lst = []
+        
+        self.testBest_intervalLst= []
+        intervalLst = [128,256,512,1024,2048,4096]
+        for interval in intervalLst:
+            self.testBest_intervalLst.extend([f'800_0_interval_{interval}_noiseRatio_{round(0.1*i,1)}' for i in range(10)])
+            self.testBest_intervalLst.extend([f'800_45_interval_{interval}_noiseRatio_{round(0.1*i,1)}' for i in range(10)])
 
     def runTrain(self, dataSet):
 
@@ -99,6 +105,8 @@ class denoisingDsvddLoop:
         
         FEed_testBed_dataLst = [f'FEed_800_0_noiseRatio_{round(0.1*i,1)}' for i in range(10)]+[f'FEed_800_45_noiseRatio_{round(0.1*i,1)}' for i in range(10)]
         
+        
+        
         if self.config['data_type'] in [f'800_0_noiseRatio_{round(0.1*i,1)}' for i in range(10)]+[f'800_45_noiseRatio_{round(0.1*i,1)}' for i in range(10)]:
             
             x_train,x_val,y_train,y_val = dataSetToTensor_testbed(dataSet=dataSet,isTrain=True)
@@ -118,7 +126,10 @@ class denoisingDsvddLoop:
                 
                 x_train = self.scaler.transform(x_train)
                 x_val = self.scaler.transform(x_val)
+                
+        elif self.config['data_type'] in self.testBest_intervalLst:
             
+            x_train,x_val,y_train,y_val = dataSetToTensor_testbed(dataSet=dataSet,isTrain=True)
             
         else:
 
@@ -574,6 +585,9 @@ class denoisingDsvddLoop:
             
             x_test = self.scaler.transform(x_test)
             
+        elif self.config['data_type'] in self.testBest_intervalLst:
+            
+            x_test,y_test = dataSetToTensor_testbed(dataSet=dataSet,isTrain=False)
             
         else:
             

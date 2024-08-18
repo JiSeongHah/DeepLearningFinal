@@ -24,6 +24,14 @@ def loadData(configs, isTrain):
     testBed_dataLst = [f'800_0_noiseRatio_{round(0.1*i,1)}' for i in range(10)]+[f'800_45_noiseRatio_{round(0.1*i,1)}' for i in range(10)]
     
     FEed_testBed_dataLst = [f'FEed_800_0_noiseRatio_{round(0.1*i,1)}' for i in range(10)]+[f'FEed_800_45_noiseRatio_{round(0.1*i,1)}' for i in range(10)]
+    
+    
+    testBest_intervalLst= []
+    intervalLst = [128,256,512,1024,2048,4096]
+    
+    for interval in intervalLst:
+        testBest_intervalLst.extend([f'800_0_interval_{interval}_noiseRatio_{round(0.1*i,1)}' for i in range(10)])
+        testBest_intervalLst.extend([f'800_45_interval_{interval}_noiseRatio_{round(0.1*i,1)}' for i in range(10)])
         
     if whichData == "mnist":
         loadedData = datasets.MNIST(
@@ -93,6 +101,8 @@ def loadData(configs, isTrain):
             with open(dataLoadPath, "rb") as F:
                 loadedData = pickle.load(F)
                 
+            print(loadedData)
+                
         if isTrain is False:
             
             dataLoadPath = f'/home/asdflkj3123/mainDir/forUni/theDir1/DeepLearningFinal/newDataVer0/scripts/800_Testbed/pkled_data/noised_data/{whichData}/test_{dataName}_noised_{actualNoise}.pkl'
@@ -117,7 +127,34 @@ def loadData(configs, isTrain):
             dataLoadPath = f'/home/asdflkj3123/mainDir/forUni/theDir1/DeepLearningFinal/newDataVer0/scripts/800_Testbed/pkled_data/FEed_data/{whichData}/test_{dataName}_noised_{actualNoise}.pkl'
             with open(dataLoadPath, "rb") as F:
                 loadedData = pickle.load(F)
+                
+                
+    elif whichData in testBest_intervalLst:
+        
+        tmpBaseDir = f'/home/asdflkj3123/mainDir/forUni/theDir1/DeepLearningFinal/newDataVer0/scripts/800_Testbed/pkled_data/noised_data/'
+        
+        dataName = whichData.split("_noiseRatio_")[0]
+        actualNoise = whichData.split("_noiseRatio_")[-1]
+        
+        if isTrain is True:
             
+            dataLoadPath = os.path.join(
+                tmpBaseDir,
+                f'{whichData}/trainVal_{dataName}_noised_{actualNoise}.pkl'
+                )
+            with open(dataLoadPath, "rb") as F:
+                loadedData = pickle.load(F)
+                
+        if isTrain is False:
+            
+            dataLoadPath = os.path.join(
+                tmpBaseDir,
+                f'{whichData}/test_{dataName}_noised_{actualNoise}.pkl'
+            )
+            
+            with open(dataLoadPath, "rb") as F:
+                loadedData = pickle.load(F)
+        
         return loadedData
 
 def openPickle(loadPath):
@@ -136,16 +173,28 @@ class myNewDataset(torch.utils.data.Dataset):
         
         self.dataType = configs["data_type"]
         
-        
-        
         self.loadedData = loadData(configs=configs, isTrain=isTrain)
         
-        noised_data_lst = [f'800_0_noiseRatio_{round(0.1*i,1)}' for i in range(10)]+[f'800_45_noiseRatio_{round(0.1*i,1)}' for i in range(10)]
-        FEed_data_lst = [f'FEed_800_0_noiseRatio_{round(0.1*i,1)}' for i in range(10)]+[f'FEed_800_45_noiseRatio_{round(0.1*i,1)}' for i in range(10)]
+        self.noised_data_lst = [f'800_0_noiseRatio_{round(0.1*i,1)}' for i in range(10)]+[f'800_45_noiseRatio_{round(0.1*i,1)}' for i in range(10)]
+        self.FEed_data_lst = [f'FEed_800_0_noiseRatio_{round(0.1*i,1)}' for i in range(10)]+[f'FEed_800_45_noiseRatio_{round(0.1*i,1)}' for i in range(10)]
         
+        self.testBest_intervalLst= []
+        intervalLst = [128,256,512,1024,2048,4096]
+        for interval in intervalLst:
+            self.testBest_intervalLst.extend([f'800_0_interval_{interval}_noiseRatio_{round(0.1*i,1)}' for i in range(10)])
+            self.testBest_intervalLst.extend([f'800_45_interval_{interval}_noiseRatio_{round(0.1*i,1)}' for i in range(10)])
+            
+        if self.dataType in self.testBest_intervalLst:
+            
+            whichData = configs["data_type"]
+            dataName = whichData.split("_noiseRatio_")[0]
+            actualNoise = whichData.split("noiseRatio_")[-1]
         
-        
-        if self.dataType in noised_data_lst:
+            self.mean_std_dict = openPickle(
+                f'/home/asdflkj3123/mainDir/forUni/theDir1/DeepLearningFinal/newDataVer0/scripts/800_Testbed/pkled_data/noised_data/{whichData}/trainVal_{dataName}_noised_{actualNoise}_mean_std.pkl'
+            )
+            
+        if self.dataType in self.noised_data_lst:
             whichData = configs["data_type"]
             dataName = whichData.split("_noiseRatio_")[0]
             actualNoise = whichData.split("noiseRatio_")[-1]
@@ -167,6 +216,9 @@ class myNewDataset(torch.utils.data.Dataset):
         return len(self.loadedData)
 
     def __getitem__(self, idx):
+        
+        
+        
         
         if self.dataType in [f'800_0_noiseRatio_{round(0.1*i,1)}' for i in range(10)]+[f'800_45_noiseRatio_{round(0.1*i,1)}' for i in range(10)]:
             
@@ -191,6 +243,7 @@ class myNewDataset(torch.utils.data.Dataset):
         
         elif self.dataType in [f'FEed_800_0_noiseRatio_{round(0.1*i,1)}' for i in range(10)]+[f'FEed_800_45_noiseRatio_{round(0.1*i,1)}' for i in range(10)]:
             
+            
             data = self.loadedData[idx][0]
             
             # if self.doZScore:
@@ -208,6 +261,25 @@ class myNewDataset(torch.utils.data.Dataset):
             flg = self.loadedData[idx][2]
 
             return data, label, flg
+            
+        
+        elif self.dataType in self.testBest_intervalLst:
+            
+            data = self.loadedData[idx][0]
+            self.doZScore = self.configs['do_zScore']
+            if self.doZScore:
+                
+                meanValue = self.mean_std_dict['mean']
+                stdValue = self.mean_std_dict['std']
+                
+                data = (data-meanValue)*(1/(stdValue+1e-9))
+            
+            label = self.loadedData[idx][1]
+            
+            flg = self.loadedData[idx][2]
+
+            return data, label, flg
+            
             
         else:
 
