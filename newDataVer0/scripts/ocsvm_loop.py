@@ -157,6 +157,8 @@ class ocsvmLoop:
             "y_anomaly_score": y_anomaly_score,
             "y_test": y_test,
             "x_test": x_test,
+            'test_score_raw':y_anomaly_score,
+            'test_label_raw':y_test,
         }
 
         print("ocsvm test complete!!!")

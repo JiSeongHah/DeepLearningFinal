@@ -67,6 +67,8 @@ class vanillaDsvddLoop:
         self.test_averagePrecisionLst = []
         self.test_rocAucLst = []
         self.test_f_lst = []
+        self.test_score_raw = []
+        self.test_label_raw = []
         
         self.testBest_intervalLst= []
         intervalLst = [128,256,512,1024,2048,4096]
@@ -597,6 +599,8 @@ class vanillaDsvddLoop:
             "test_average_precision": self.test_averagePrecisionLst,
             "test_roc_auc": self.test_rocAucLst,
             "test_f1": self.test_f_lst,
+            'test_score_raw':self.test_score_raw,
+            'test_label_raw':self.test_label_raw,
         }
 
         return save_dict
@@ -651,6 +655,9 @@ class vanillaDsvddLoop:
             torch.cat(totalLabelLstTest).numpy(),
             torch.cat(totalScoreLstTest).numpy(),
         )
+        
+        totalLabelTrue_save = copy.deepcopy(totalLabelTrue)
+        totalScores_save = copy.deepcopy(totalScores)
 
         print(f"shape of label : {totalLabelTrue.shape}")
         print(f"shape of score : {totalScores.shape}")
@@ -733,6 +740,8 @@ class vanillaDsvddLoop:
         self.test_averagePrecisionLst.append(averagePrecisionScore)
         self.test_rocAucLst.append(rocAucScore)
         self.test_f_lst.append(fMax)
+        self.test_score_raw = totalScores_save
+        self.test_label_raw = totalLabelTrue_save
 
     def testStepEnd(self):
 
