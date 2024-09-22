@@ -180,8 +180,11 @@ class ocsvmLoop:
     def load_model(self):
 
         model_load_path = self.config["modelSavePath"]
-
-        with open(os.path.join(model_load_path, "ocsvmTrainResult.pkl"), "rb") as f:
-            loadedDict = pickle.load(f)
+        try:
+            with open(os.path.join(model_load_path, "ocsvmTrainResult.pkl"), "rb") as f:
+                loadedDict = pickle.load(f)
+        except:
+            raise Exception('ocsvm saved model not exist!!!')
+        
 
         return loadedDict

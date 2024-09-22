@@ -761,6 +761,9 @@ class vanillaDsvddLoop:
         loadedAeWeight = torch.load(
             os.path.join(preAeSavePath, "ae_" + str(aeIterNum)) + ".pt"
         )
+        ae_path_exist = os.path.exists(os.path.join(preAeSavePath, "ae_" + str(aeIterNum)) + ".pt")
+        if ae_path_exist == False:
+            raise Exception("ae path not exist!")
 
         missing = DSVDD_preAE.load_state_dict(loadedAeWeight)
 
@@ -783,6 +786,10 @@ class vanillaDsvddLoop:
             os.path.join(mainModelSavePath, "mainModel_" + str(mainModelIterNum))
             + ".pt"
         )
+        main_model_path_exist = os.path.exists(os.path.join(mainModelSavePath, "mainModel_" + str(mainModelIterNum))
+            + ".pt")
+        if main_model_path_exist == False:
+            raise Exception("main model path not exist!")
         missing = DSVDD_model.load_state_dict(loadedMainModelWight)
         print("saving MainModel weight complete!")
 
