@@ -48,7 +48,7 @@ class runLoop:
                                 savePath_upper,
                                 each_saved_dir
                             )
-                        
+                            loadedConfig["modelSavePath"] = savePath
                             self.run(
                                 loaded_config=loadedConfig,
                                 save_path= savePath,
@@ -85,11 +85,14 @@ class runLoop:
 
         return loadedConfig
 
-    def saveConfig(self, yaml_path, configs):
+    def saveConfig(self, yaml_path, configs,doTestOnly):
         print("saving configs...")
-
-        with open(os.path.join(yaml_path, "resultConfig.yaml"), "w") as f:
-            yaml.dump(configs, f)
+        if doTestOnly:
+            with open(os.path.join(yaml_path, "resultConfig_testOnly.yaml"), "w") as f:
+                yaml.dump(configs, f)
+        else:
+            with open(os.path.join(yaml_path, "resultConfig.yaml"), "w") as f:
+                yaml.dump(configs, f)
 
         print("saving configs complete!!")
 
@@ -101,19 +104,17 @@ class runLoop:
 
         configSavePath = os.path.join(save_path, "configs/")
         
-        self.saveConfig(yaml_path=configSavePath, configs=resultConfig)
+        self.saveConfig(yaml_path=configSavePath, configs=resultConfig,doTestOnly=doTestOnly)
 
         print("all complete!!!")
 
 
 if __name__ == "__main__":
 
-    for i in range(3):
+    configPath = "../configs/config.yaml"
 
-        configPath = "../configs/config.yaml"
+    savePath = "./history/"
 
-        savePath = "./history/"
+    MAIN = runLoop(configPath, savePath=savePath)
 
-        MAIN = runLoop(configPath, savePath=savePath)
-
-        # MAIN.run(doTestOnly=False)
+    # MAIN.run(doTestOnly=False)

@@ -73,6 +73,15 @@ class denoisingDsvddLoop:
         for interval in intervalLst:
             self.testBest_intervalLst.extend([f'800_0_interval_{interval}_noiseRatio_{round(0.1*i,1)}' for i in range(10)])
             self.testBest_intervalLst.extend([f'800_45_interval_{interval}_noiseRatio_{round(0.1*i,1)}' for i in range(10)])
+            
+        self.FEed_testBed_interval_dataLst = []
+        datatype_lst = ['800_0','800_45']
+        interval_lst = [128,256,512,1024,2048,4096]
+        noise_ratio_lst = [round(0.1*i,1) for i in range(10)]
+        for datatype_1 in datatype_lst:
+            for interval_1 in interval_lst:
+                for nonoise_ratio in noise_ratio_lst:
+                    self.FEed_testBed_interval_dataLst.append(f'FEed_{datatype_1}_interval_{interval_1}_noiseRatio_{nonoise_ratio}')
 
     def runTrain(self, dataSet):
 
@@ -112,9 +121,32 @@ class denoisingDsvddLoop:
         
         if self.config['data_type'] in [f'800_0_noiseRatio_{round(0.1*i,1)}' for i in range(10)]+[f'800_45_noiseRatio_{round(0.1*i,1)}' for i in range(10)]:
             
-            x_train,x_val,y_train,y_val = dataSetToTensor_testbed(dataSet=dataSet,isTrain=True)
+            raise Exception('legacy error 1')
+            # x_train,x_val,y_train,y_val = dataSetToTensor_testbed(dataSet=dataSet,isTrain=True)
             
         elif self.config['data_type'] in FEed_testBed_dataLst:
+            
+            raise Exception('legacy error 2')
+            
+            # x_train,x_val,y_train,y_val = dataSetToTensor_testbed(dataSet=dataSet,isTrain=True)
+            
+            # whichData_1 = self.config["data_type"]
+            # dataName_1 = whichData_1.split("_noiseRatio_")[0]
+            # actualNoise_1 = whichData_1.split("noiseRatio_")[-1]
+            
+            # if self.config['do_zScore']:
+            #     self.scaler = load(
+            #         f'/home/asdflkj3123/mainDir/forUni/theDir1/DeepLearningFinal/newDataVer0/scripts/800_Testbed/pkled_data/FEed_data/{whichData_1}/trainVal_{dataName_1}_noised_{actualNoise_1}_scaler.joblib'
+            #     )
+                
+            #     x_train = self.scaler.transform(x_train)
+            #     x_val = self.scaler.transform(x_val)
+                
+        elif self.config['data_type'] in self.testBest_intervalLst:
+            
+            x_train,x_val,y_train,y_val = dataSetToTensor_testbed(dataSet=dataSet,isTrain=True)
+            
+        elif self.config['data_type'] in self.FEed_testBed_interval_dataLst:
             
             x_train,x_val,y_train,y_val = dataSetToTensor_testbed(dataSet=dataSet,isTrain=True)
             
@@ -124,15 +156,11 @@ class denoisingDsvddLoop:
             
             if self.config['do_zScore']:
                 self.scaler = load(
-                    f'/home/asdflkj3123/mainDir/forUni/theDir1/DeepLearningFinal/newDataVer0/scripts/800_Testbed/pkled_data/FEed_data/{whichData_1}/trainVal_{dataName_1}_noised_{actualNoise_1}_scaler.joblib'
+                    f'./800_Testbed/pkled_data/FEed_data/{whichData_1}/trainVal_{dataName_1}_noised_{actualNoise_1}_scaler.joblib'
                 )
                 
                 x_train = self.scaler.transform(x_train)
                 x_val = self.scaler.transform(x_val)
-                
-        elif self.config['data_type'] in self.testBest_intervalLst:
-            
-            x_train,x_val,y_train,y_val = dataSetToTensor_testbed(dataSet=dataSet,isTrain=True)
             
         else:
 
@@ -572,9 +600,31 @@ class denoisingDsvddLoop:
         
         if self.config['data_type'] in [f'800_0_noiseRatio_{round(0.1*i,1)}' for i in range(10)]+[f'800_45_noiseRatio_{round(0.1*i,1)}' for i in range(10)]:
             
-            x_test,y_test = dataSetToTensor_testbed(dataSet=dataSet,isTrain=False)
+            raise Exception('legacy error 1')
+            
+            # x_test,y_test = dataSetToTensor_testbed(dataSet=dataSet,isTrain=False)
             
         elif self.config['data_type'] in FEed_testBed_dataLst:
+            
+            raise Exception('legacy error 2')
+            
+            # x_test,y_test = dataSetToTensor_testbed(dataSet=dataSet,isTrain=False)
+            
+            # whichData = self.config["data_type"]
+            # dataName = whichData.split("_noiseRatio_")[0]
+            # actualNoise = whichData.split("noiseRatio_")[-1]
+            
+            # self.scaler = load(
+            #     f'/home/asdflkj3123/mainDir/forUni/theDir1/DeepLearningFinal/newDataVer0/scripts/800_Testbed/pkled_data/FEed_data/{whichData}/trainVal_{dataName}_noised_{actualNoise}_scaler.joblib'
+            # )
+            
+            # x_test = self.scaler.transform(x_test)
+            
+        elif self.config['data_type'] in self.testBest_intervalLst:
+            
+            x_test,y_test = dataSetToTensor_testbed(dataSet=dataSet,isTrain=False)
+            
+        elif self.config['data_type'] in self.FEed_testBed_interval_dataLst:
             
             x_test,y_test = dataSetToTensor_testbed(dataSet=dataSet,isTrain=False)
             
@@ -583,14 +633,11 @@ class denoisingDsvddLoop:
             actualNoise = whichData.split("noiseRatio_")[-1]
             
             self.scaler = load(
-                f'/home/asdflkj3123/mainDir/forUni/theDir1/DeepLearningFinal/newDataVer0/scripts/800_Testbed/pkled_data/FEed_data/{whichData}/trainVal_{dataName}_noised_{actualNoise}_scaler.joblib'
+                f'./800_Testbed/pkled_data/FEed_data/{whichData}/trainVal_{dataName}_noised_{actualNoise}_scaler.joblib'
             )
             
-            x_test = self.scaler.transform(x_test)
-            
-        elif self.config['data_type'] in self.testBest_intervalLst:
-            
-            x_test,y_test = dataSetToTensor_testbed(dataSet=dataSet,isTrain=False)
+            if self.config['do_zScore']:
+                x_test = self.scaler.transform(x_test)
             
         else:
             
@@ -609,7 +656,7 @@ class denoisingDsvddLoop:
             "test_roc_auc": self.test_rocAucLst,
             "test_f1": self.test_f_lst,
             'test_score_raw':self.test_score_raw,
-            'test_label_raw':self.test_label_raw
+            'test_label_raw':self.test_label_raw,
         }
 
         return save_dict

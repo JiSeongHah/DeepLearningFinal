@@ -23,9 +23,11 @@ from datetime import datetime
 
 class MainLoop:
 
-    def __init__(self, config, doTestOnly) -> None:
+    def __init__(self, config,doTestOnly,mask_dict=None) -> None:
 
         self.config = config
+        
+        self.mask_dict= mask_dict
 
         self.doTestOnly = doTestOnly
 
@@ -200,6 +202,36 @@ class MainLoop:
     def testResultToConfig(self, testResult):
 
         whichModel = self.config["which_model"]
+        
+        # test_score_raw = testResult['test_score_raw']
+        # test_label_raw = testResult['test_label_raw']
+        
+        # mask_abnormal_only = test_label_raw == 1
+        # mask_normal_only = test_label_raw != 1
+        
+        # label_normal_only = test_label_raw[mask_normal_only]
+        # score_normal_only = test_score_raw[mask_normal_only]
+        
+        # ratio_lst = [1,2,4,8,16]
+        
+        # if 'FE' not in self.config['data_type']:
+        #     if '512' in self.config['data_type']:
+        #         num_to_name = '512'
+        #     elif '1024' in self.config['data_type']:
+        #         num_to_name = '1024'
+        #     elif '2048' in self.config['data_type']:
+        #         num_to_name = '2048'
+        #     elif '4096' in self.config['data_type']:
+        #         num_to_name = '512'
+        
+        # for ratio in ratio_lst:
+            
+        #     mask_arr = np.array(
+        #         self.mask_dict[num_to_name][ratio]
+        #     )
+            
+        #     tmp_
+            
         if whichModel in ["ocsvm"]:
 
             y_pred = testResult["y_pred"]

@@ -25,30 +25,30 @@ class runLoop:
         for data_type in lst_loadedConfig["data_type_lst"]:
             for which_model in lst_loadedConfig["which_model_lst"]:
                 for normal_label in lst_loadedConfig["normal_label_lst"]:
-                    for noise_ratio in lst_loadedConfig["noise_ratio_lst"]:
-                        self.loadedConfig = copy.deepcopy(lst_loadedConfig)
+                    # for noise_ratio in lst_loadedConfig["noise_ratio_lst"]:
+                    self.loadedConfig = copy.deepcopy(lst_loadedConfig)
 
-                        self.loadedConfig["data_type"] = data_type
-                        self.loadedConfig["which_model"] = which_model
-                        self.loadedConfig["normal_label"] = normal_label
-                        self.loadedConfig["noise_ratio"] = noise_ratio
+                    self.loadedConfig["data_type"] = data_type
+                    self.loadedConfig["which_model"] = which_model
+                    self.loadedConfig["normal_label"] = normal_label
+                    # self.loadedConfig["noise_ratio"] = noise_ratio
 
-                        now = datetime.now()
-                        self.savePath = os.path.join(
-                            savePath,
-                            self.loadedConfig["which_model"] + "_testbed_zscore_20240818",
-                            # self.loadedConfig["which_model"] + "_grad_test",
-                            self.loadedConfig["data_type"],
-                            "normal_label_" + str(self.loadedConfig["normal_label"]),
-                            f"noise_{noise_ratio}",
-                            str(round(now.timestamp())),
-                        )
-                        # self.savePath = os.path.join(savePath,self.loadedConfig['which_model']+'_grad_test',self.loadedConfig['data_type'],'normal_label_'+str(self.loadedConfig['normal_label']), str(round(now.timestamp())))
-                        os.makedirs(self.savePath)
+                    now = datetime.now()
+                    self.savePath = os.path.join(
+                        savePath,
+                        self.loadedConfig["which_model"] + "_testbed_zscore_20240818",
+                        # self.loadedConfig["which_model"] + "_grad_test",
+                        self.loadedConfig["data_type"],
+                        "normal_label_" + str(self.loadedConfig["normal_label"]),
+                        # f"noise_{noise_ratio}",
+                        str(round(now.timestamp())),
+                    )
+                    # self.savePath = os.path.join(savePath,self.loadedConfig['which_model']+'_grad_test',self.loadedConfig['data_type'],'normal_label_'+str(self.loadedConfig['normal_label']), str(round(now.timestamp())))
+                    os.makedirs(self.savePath)
 
-                        self.loadedConfig["modelSavePath"] = self.savePath
+                    self.loadedConfig["modelSavePath"] = self.savePath
 
-                        self.run(doTestOnly=False)
+                    self.run(doTestOnly=False)
 
     def copySaveResult(resultPath, savePath):
 
