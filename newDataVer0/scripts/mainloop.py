@@ -6,7 +6,8 @@ from mySSVDD.ssvdd_train import ssvdd_train
 from mySSVDD.ssvdd_test import ssvdd_test
 from smoothedDSVDD_loop import smoothedDsvddLoop
 from denoisingDSVDD_loop import denoisingDsvddLoop
-
+import os
+import pickle
 
 from Dataload import myNewDataset
 
@@ -129,11 +130,6 @@ class MainLoop:
         elif whichModel in ["vanilla_dsvdd", "smoothed_dsvdd", "denoising_dsvdd"]:
             from pprint import pprint
 
-            for i in range(10):
-                pprint(trainResult)
-                pprint("")
-                pprint("")
-                pprint("")
             self.config["trainResult"] = {}
 
             self.config["trainResult"]["ae_trian_loss"] = {
@@ -203,34 +199,16 @@ class MainLoop:
 
         whichModel = self.config["which_model"]
         
-        # test_score_raw = testResult['test_score_raw']
-        # test_label_raw = testResult['test_label_raw']
+        test_score_raw = testResult['test_score_raw']
+        test_label_raw = testResult['test_label_raw']
         
-        # mask_abnormal_only = test_label_raw == 1
-        # mask_normal_only = test_label_raw != 1
-        
-        # label_normal_only = test_label_raw[mask_normal_only]
-        # score_normal_only = test_score_raw[mask_normal_only]
-        
-        # ratio_lst = [1,2,4,8,16]
-        
-        # if 'FE' not in self.config['data_type']:
-        #     if '512' in self.config['data_type']:
-        #         num_to_name = '512'
-        #     elif '1024' in self.config['data_type']:
-        #         num_to_name = '1024'
-        #     elif '2048' in self.config['data_type']:
-        #         num_to_name = '2048'
-        #     elif '4096' in self.config['data_type']:
-        #         num_to_name = '512'
-        
-        # for ratio in ratio_lst:
+        test_result_only_dict = {
+            'test_score':test_score_raw,
+            'test_label':test_label_raw
+        }
+        with open(os.path.join(self.config['modelSavePath'],'test_result_only.pkl'),'wb') as F:
+            pickle.dump(test_result_only_dict,F)
             
-        #     mask_arr = np.array(
-        #         self.mask_dict[num_to_name][ratio]
-        #     )
-            
-        #     tmp_
             
         if whichModel in ["ocsvm"]:
 
@@ -274,10 +252,6 @@ class MainLoop:
         elif whichModel in ["vanilla_dsvdd", "smoothed_dsvdd", "denoising_dsvdd"]:
             from pprint import pprint
 
-            for i in range(10):
-                print("============================================================")
-                pprint(testResult)
-                print("")
 
             self.config["testResult"] = {}
             self.config["testResult"]["average_precision"] = str(

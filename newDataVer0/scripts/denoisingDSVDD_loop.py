@@ -175,6 +175,10 @@ class denoisingDsvddLoop:
             )
 
             x_train, y_train = return_normal_only(x_train, y_train)
+            
+            # import time
+            print('x_train.shape',x_train.shape)
+            # time.sleep(1000)
 
         for eachEpoch in range(self.config["preAE_epoch"]):
             self.trainPreAE(
@@ -240,7 +244,7 @@ class denoisingDsvddLoop:
             for idx, bInputLabel in enumerate(aeTrainDataloader):
 
                 bInput, bLabel = bInputLabel
-
+                # print(bInput.size(),33333333)
                 self.AEoptim.zero_grad()
 
                 answer = bInput.clone().detach().float()
@@ -400,6 +404,7 @@ class denoisingDsvddLoop:
         for idx, bInputLabel in enumerate(theDloader):
 
             bInput, bLabel = bInputLabel
+            
 
             self.Modeloptim.zero_grad()
 

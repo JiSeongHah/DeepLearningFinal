@@ -21,39 +21,50 @@ class runLoop:
         self.configPath = configPath
 
         lst_loadedConfig = self.readConfig(self.configPath)
+        
+        error_log = []
 
         for data_type in lst_loadedConfig["data_type_lst"]:
             for which_model in lst_loadedConfig["which_model_lst"]:
                 for normal_label in lst_loadedConfig["normal_label_lst"]:
-                    for noise_ratio in lst_loadedConfig["noise_ratio_lst"]:
-                        loadedConfig = copy.deepcopy(lst_loadedConfig)
+                    # for noise_ratio in lst_loadedConfig["noise_ratio_lst"]:
+                    loadedConfig = copy.deepcopy(lst_loadedConfig)
 
-                        loadedConfig["data_type"] = data_type
-                        loadedConfig["which_model"] = which_model
-                        loadedConfig["normal_label"] = normal_label
-                        loadedConfig["noise_ratio"] = noise_ratio
+                    loadedConfig["data_type"] = data_type
+                    loadedConfig["which_model"] = which_model
+                    loadedConfig["normal_label"] = normal_label
+                    # loadedConfig["noise_ratio"] = noise_ratio
 
-                        savePath_upper = os.path.join(
-                            savePath_root,
-                            loadedConfig["which_model"] + "_testbed_zscore_20240818",
-                            # loadedConfig["which_model"] + "_grad_test",
-                            loadedConfig["data_type"],
-                            "normal_label_" + str(loadedConfig["normal_label"]),
-                            f"noise_{noise_ratio}"
+                    savePath_upper = os.path.join(
+                        savePath_root,
+                        loadedConfig["which_model"] + "_testbed_zscore_20240818",
+                        # loadedConfig["which_model"] + "_grad_test",
+                        loadedConfig["data_type"],
+                        "normal_label_" + str(loadedConfig["normal_label"]),
+                        # f"noise_{noise_ratio}"
+                    )
+                    
+                    dir_lst = os.listdir(savePath_upper)
+                    for each_saved_dir in dir_lst:
+                        savePath = os.path.join(
+                            savePath_upper,
+                            each_saved_dir
                         )
-                        
-                        dir_lst = os.listdir(savePath_upper)
-                        for each_saved_dir in dir_lst:
-                            savePath = os.path.join(
-                                savePath_upper,
-                                each_saved_dir
-                            )
-                            loadedConfig["modelSavePath"] = savePath
+                        loadedConfig["modelSavePath"] = savePath
+                        try:
                             self.run(
                                 loaded_config=loadedConfig,
                                 save_path= savePath,
                                 doTestOnly=True
                             )
+                        except:
+                            error_log.append(
+                                f'erorr happend at {savePath}'
+                            )
+        print('======================================================================')
+        for i in error_log:
+            print(i)
+            print()
 
     def copySaveResult(resultPath, savePath):
 
@@ -115,6 +126,6 @@ if __name__ == "__main__":
 
     savePath = "./history/"
 
-    MAIN = runLoop(configPath, savePath=savePath)
+    MAIN = runLoop(configPath, savePath_root=savePath)
 
     # MAIN.run(doTestOnly=False)

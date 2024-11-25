@@ -25,6 +25,15 @@ def loadData(configs, isTrain):
     
     FEed_testBed_dataLst = [f'FEed_800_0_noiseRatio_{round(0.1*i,1)}' for i in range(10)]+[f'FEed_800_45_noiseRatio_{round(0.1*i,1)}' for i in range(10)]
     
+    FEed_testBed_interval_dataLst = []
+    datatype_lst = ['800_0','800_45']
+    interval_lst = [128,256,512,1024,2048,4096]
+    noise_ratio_lst = [round(0.1*i,1) for i in range(10)]
+    for datatype_1 in datatype_lst:
+        for interval_1 in interval_lst:
+            for nonoise_ratio in noise_ratio_lst:
+                FEed_testBed_interval_dataLst.append(f'FEed_{datatype_1}_interval_{interval_1}_noiseRatio_{nonoise_ratio}')
+    
     
     testBest_intervalLst= []
     intervalLst = [128,256,512,1024,2048,4096]
@@ -33,13 +42,23 @@ def loadData(configs, isTrain):
         testBest_intervalLst.extend([f'800_0_interval_{interval}_noiseRatio_{round(0.1*i,1)}' for i in range(10)])
         testBest_intervalLst.extend([f'800_45_interval_{interval}_noiseRatio_{round(0.1*i,1)}' for i in range(10)])
         
-    if whichData == "mnist":
-        loadedData = datasets.MNIST(
-            root=dataDownPath,
-            train=isTrain,
-            download=True,
-            transform=transforms.ToTensor(),
-        )
+    if whichData == "mnist_yes":
+        
+        if isTrain is True:
+            
+            with open(
+                '/home/asdflkj3123/mainDir/forUni/theDir1/DeepLearningFinal/newDataVer0/scripts/data_download_path/non_noise_data/mnist_ver/mnist_processed_train.pkl',
+                'rb'
+            ) as F:
+                
+                loadedData = pickle.load(F)
+        else:
+            with open(
+                '/home/asdflkj3123/mainDir/forUni/theDir1/DeepLearningFinal/newDataVer0/scripts/data_download_path/non_noise_data/mnist_ver/mnist_processed_test.pkl',
+                'rb'
+            ) as F:
+                
+                loadedData = pickle.load(F)
 
         return loadedData
 
@@ -61,13 +80,24 @@ def loadData(configs, isTrain):
 
         return loadedData
 
-    elif whichData == "cifar10":
-        loadedData = datasets.CIFAR10(
-            root=dataDownPath,
-            train=isTrain,
-            download=True,
-            transform=transforms.ToTensor(),
-        )
+    elif whichData == "cifar_yes":
+        
+        if isTrain is True:
+            
+            with open(
+                '/home/asdflkj3123/mainDir/forUni/theDir1/DeepLearningFinal/newDataVer0/scripts/data_download_path/non_noise_data/cifar_ver/cifar_processed_train.pkl',
+                'rb'
+            ) as F:
+                
+                loadedData = pickle.load(F)
+        else:
+            with open(
+                '/home/asdflkj3123/mainDir/forUni/theDir1/DeepLearningFinal/newDataVer0/scripts/data_download_path/non_noise_data/cifar_ver/cifar_processed_test.pkl',
+                'rb'
+            ) as F:
+                
+                loadedData = pickle.load(F)
+        
 
         return loadedData
 
@@ -92,41 +122,45 @@ def loadData(configs, isTrain):
     
     elif whichData in testBed_dataLst:
         
-        dataName = whichData.split("_noiseRatio_")[0]
-        actualNoise = whichData.split("noiseRatio_")[-1]
+        raise Exception('legacy error 1')
         
-        if isTrain is True:
+        # dataName = whichData.split("_noiseRatio_")[0]
+        # actualNoise = whichData.split("noiseRatio_")[-1]
+        
+        # if isTrain is True:
             
-            dataLoadPath = f'/home/asdflkj3123/mainDir/forUni/theDir1/DeepLearningFinal/newDataVer0/scripts/800_Testbed/pkled_data/noised_data/{whichData}/trainVal_{dataName}_noised_{actualNoise}.pkl'
-            with open(dataLoadPath, "rb") as F:
-                loadedData = pickle.load(F)
+        #     dataLoadPath = f'/home/asdflkj3123/mainDir/forUni/theDir1/DeepLearningFinal/newDataVer0/scripts/800_Testbed/pkled_data/noised_data/{whichData}/trainVal_{dataName}_noised_{actualNoise}.pkl'
+        #     with open(dataLoadPath, "rb") as F:
+        #         loadedData = pickle.load(F)
                 
-            print(loadedData)
+        #     print(loadedData)
                 
-        if isTrain is False:
+        # if isTrain is False:
             
-            dataLoadPath = f'/home/asdflkj3123/mainDir/forUni/theDir1/DeepLearningFinal/newDataVer0/scripts/800_Testbed/pkled_data/noised_data/{whichData}/test_{dataName}_noised_{actualNoise}.pkl'
-            with open(dataLoadPath, "rb") as F:
-                loadedData = pickle.load(F)
+        #     dataLoadPath = f'/home/asdflkj3123/mainDir/forUni/theDir1/DeepLearningFinal/newDataVer0/scripts/800_Testbed/pkled_data/noised_data/{whichData}/test_{dataName}_noised_{actualNoise}.pkl'
+        #     with open(dataLoadPath, "rb") as F:
+        #         loadedData = pickle.load(F)
             
-        return loadedData
+        # return loadedData
     
     elif whichData in FEed_testBed_dataLst:
         
-        dataName = whichData.split("_noiseRatio_")[0].split('ed_')[-1]
-        actualNoise = whichData.split("noiseRatio_")[-1]
+        raise Exception('legacy error 2')
         
-        if isTrain is True:
+        # dataName = whichData.split("_noiseRatio_")[0].split('ed_')[-1]
+        # actualNoise = whichData.split("noiseRatio_")[-1]
+        
+        # if isTrain is True:
             
-            dataLoadPath = f'/home/asdflkj3123/mainDir/forUni/theDir1/DeepLearningFinal/newDataVer0/scripts/800_Testbed/pkled_data/FEed_data/{whichData}/trainVal_{dataName}_noised_{actualNoise}.pkl'
-            with open(dataLoadPath, "rb") as F:
-                loadedData = pickle.load(F)
+        #     dataLoadPath = f'/home/asdflkj3123/mainDir/forUni/theDir1/DeepLearningFinal/newDataVer0/scripts/800_Testbed/pkled_data/FEed_data/{whichData}/trainVal_{dataName}_noised_{actualNoise}.pkl'
+        #     with open(dataLoadPath, "rb") as F:
+        #         loadedData = pickle.load(F)
                 
-        if isTrain is False:
+        # if isTrain is False:
             
-            dataLoadPath = f'/home/asdflkj3123/mainDir/forUni/theDir1/DeepLearningFinal/newDataVer0/scripts/800_Testbed/pkled_data/FEed_data/{whichData}/test_{dataName}_noised_{actualNoise}.pkl'
-            with open(dataLoadPath, "rb") as F:
-                loadedData = pickle.load(F)
+        #     dataLoadPath = f'/home/asdflkj3123/mainDir/forUni/theDir1/DeepLearningFinal/newDataVer0/scripts/800_Testbed/pkled_data/FEed_data/{whichData}/test_{dataName}_noised_{actualNoise}.pkl'
+        #     with open(dataLoadPath, "rb") as F:
+        #         loadedData = pickle.load(F)
                 
                 
     elif whichData in testBest_intervalLst:
@@ -152,6 +186,25 @@ def loadData(configs, isTrain):
                 f'{whichData}/test_{dataName}_noised_{actualNoise}.pkl'
             )
             
+            with open(dataLoadPath, "rb") as F:
+                loadedData = pickle.load(F)
+        
+        return loadedData
+    
+    elif whichData in FEed_testBed_interval_dataLst:
+        
+        dataName = whichData.split("_noiseRatio_")[0].split('ed_')[-1]
+        actualNoise = whichData.split("noiseRatio_")[-1]
+        
+        if isTrain is True:
+            
+            dataLoadPath = f'./800_Testbed/pkled_data/FEed_data/{whichData}/trainVal_{dataName}_noised_{actualNoise}.pkl'
+            with open(dataLoadPath, "rb") as F:
+                loadedData = pickle.load(F)
+                
+        if isTrain is False:
+            
+            dataLoadPath = f'./800_Testbed/pkled_data/FEed_data/{whichData}/test_{dataName}_noised_{actualNoise}.pkl'
             with open(dataLoadPath, "rb") as F:
                 loadedData = pickle.load(F)
         
@@ -184,6 +237,15 @@ class myNewDataset(torch.utils.data.Dataset):
             self.testBest_intervalLst.extend([f'800_0_interval_{interval}_noiseRatio_{round(0.1*i,1)}' for i in range(10)])
             self.testBest_intervalLst.extend([f'800_45_interval_{interval}_noiseRatio_{round(0.1*i,1)}' for i in range(10)])
             
+        self.FEed_testBed_interval_dataLst = []
+        datatype_lst = ['800_0','800_45']
+        interval_lst = [128,256,512,1024,2048,4096]
+        noise_ratio_lst = [round(0.1*i,1) for i in range(10)]
+        for datatype_1 in datatype_lst:
+            for interval_1 in interval_lst:
+                for nonoise_ratio in noise_ratio_lst:
+                    self.FEed_testBed_interval_dataLst.append(f'FEed_{datatype_1}_interval_{interval_1}_noiseRatio_{nonoise_ratio}')
+            
         if self.dataType in self.testBest_intervalLst:
             
             whichData = configs["data_type"]
@@ -195,13 +257,26 @@ class myNewDataset(torch.utils.data.Dataset):
             )
             
         if self.dataType in self.noised_data_lst:
+            raise Exception('legacy error ')
+        
+        elif self.dataType in self.FEed_testBed_interval_dataLst:
+            
             whichData = configs["data_type"]
             dataName = whichData.split("_noiseRatio_")[0]
             actualNoise = whichData.split("noiseRatio_")[-1]
-        
-            self.mean_std_dict = openPickle(
-                f'/home/asdflkj3123/mainDir/forUni/theDir1/DeepLearningFinal/newDataVer0/scripts/800_Testbed/pkled_data/noised_data/{whichData}/trainVal_{dataName}_noised_{actualNoise}_mean_std.pkl'
+            
+            self.scaler = load(
+                f'./800_Testbed/pkled_data/FEed_data/{whichData}/trainVal_{dataName}_noised_{actualNoise}_scaler.joblib'
             )
+            
+            
+            # whichData = configs["data_type"]
+            # dataName = whichData.split("_noiseRatio_")[0]
+            # actualNoise = whichData.split("noiseRatio_")[-1]
+        
+            # self.mean_std_dict = openPickle(
+            #     f'/home/asdflkj3123/mainDir/forUni/theDir1/DeepLearningFinal/newDataVer0/scripts/800_Testbed/pkled_data/noised_data/{whichData}/trainVal_{dataName}_noised_{actualNoise}_mean_std.pkl'
+            # )
         # elif self.dataType in FEed_data_lst:
             
         #     whichData = configs["data_type"]
@@ -217,32 +292,70 @@ class myNewDataset(torch.utils.data.Dataset):
 
     def __getitem__(self, idx):
         
-        
-        
-        
         if self.dataType in [f'800_0_noiseRatio_{round(0.1*i,1)}' for i in range(10)]+[f'800_45_noiseRatio_{round(0.1*i,1)}' for i in range(10)]:
+            
+            raise Exception('legacy error 1')
+            
+            # data = self.loadedData[idx][0]
+            # self.doZScore = self.configs['do_zScore']
+            # if self.doZScore:
+            #     print('tesssssssssssssssssssssssssssssssssssssssssss')
+            #     meanValue = self.mean_std_dict['mean']
+            #     stdValue = self.mean_std_dict['std']
+                
+            #     data = (data-meanValue)*(1/(stdValue+1e-9))
+            
+
+            # # if self.doFlatten:
+            # #     data = torch.flatten(data)
+
+            # label = self.loadedData[idx][1]
+            
+            # flg = self.loadedData[idx][2]
+
+            # return data, label, flg
+        
+        elif self.dataType in [f'FEed_800_0_noiseRatio_{round(0.1*i,1)}' for i in range(10)]+[f'FEed_800_45_noiseRatio_{round(0.1*i,1)}' for i in range(10)]:
+            
+            raise Exception('legacy error 2')
+            
+            # data = self.loadedData[idx][0]
+            
+            # # if self.doZScore:
+            # #     print('tesssssssssssssssssssssssssssssssssssssssssss')
+            # #     meanValue = self.mean_std_dict['mean']
+            # #     stdValue = self.mean_std_dict['std']
+                
+            # #     data = (data-meanValue)*(1/(stdValue+1e-9))
+
+            # # if self.doFlatten:
+            # #     data = torch.flatten(data)
+
+            # label = self.loadedData[idx][1]
+            
+            # flg = self.loadedData[idx][2]
+
+            # return data, label, flg
+            
+        
+        elif self.dataType in self.testBest_intervalLst:
             
             data = self.loadedData[idx][0]
             self.doZScore = self.configs['do_zScore']
             if self.doZScore:
-                print('tesssssssssssssssssssssssssssssssssssssssssss')
+                
                 meanValue = self.mean_std_dict['mean']
                 stdValue = self.mean_std_dict['std']
                 
                 data = (data-meanValue)*(1/(stdValue+1e-9))
             
-
-            # if self.doFlatten:
-            #     data = torch.flatten(data)
-
             label = self.loadedData[idx][1]
             
             flg = self.loadedData[idx][2]
 
             return data, label, flg
         
-        elif self.dataType in [f'FEed_800_0_noiseRatio_{round(0.1*i,1)}' for i in range(10)]+[f'FEed_800_45_noiseRatio_{round(0.1*i,1)}' for i in range(10)]:
-            
+        elif self.dataType in self.FEed_testBed_interval_dataLst:
             
             data = self.loadedData[idx][0]
             
@@ -262,32 +375,38 @@ class myNewDataset(torch.utils.data.Dataset):
 
             return data, label, flg
             
-        
-        elif self.dataType in self.testBest_intervalLst:
             
-            data = self.loadedData[idx][0]
-            self.doZScore = self.configs['do_zScore']
-            if self.doZScore:
-                
-                meanValue = self.mean_std_dict['mean']
-                stdValue = self.mean_std_dict['std']
-                
-                data = (data-meanValue)*(1/(stdValue+1e-9))
-            
-            label = self.loadedData[idx][1]
-            
-            flg = self.loadedData[idx][2]
-
-            return data, label, flg
-            
-            
-        else:
+        elif self.dataType == 'mnist_yes':
 
             data = self.loadedData[idx][0]
 
             if self.doFlatten:
                 data = torch.flatten(data)
 
+            label = self.loadedData[idx][1]
+            # print('do mnist zscore')
+
+            return data, label
+        
+        elif self.dataType == 'cifar_yes':
+
+            data = self.loadedData[idx][0]
+
+            if self.doFlatten:
+                data = torch.flatten(data)
+            
+            label = self.loadedData[idx][1]
+            
+            return data, label
+        
+        else:
+
+            data = self.loadedData[idx][0]
+
+            if self.doFlatten:
+                data = torch.flatten(data)
+                
+        
             label = self.loadedData[idx][1]
 
             return data, label

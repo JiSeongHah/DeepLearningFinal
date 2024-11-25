@@ -148,17 +148,40 @@ def check_and_normalize(data_x, config):
         and config.get("which_label_abnormal") is None
     ):
 
-        if config["normalize"] is True:
+        if config["do_zScore"] is True:
 
-            if config["data_type"] == "mnist":
+            if config["data_type"] == "mnist_yes":
+                
+                with open(
+                    '/home/asdflkj3123/mainDir/forUni/theDir1/DeepLearningFinal/newDataVer0/scripts/data_download_path/non_noise_data/mnist_ver/configs/mean_std_mnist_train.pkl',
+                    'rb'
+                ) as F:
+                    
+                    mean_std_per_label_dict = pickle.load(F)
+                    
+                    which_class = str(config.get("normal_label"))
+                    
+                    mean = mean_std_per_label_dict[which_class]['mean']
+                    std = mean_std_per_label_dict[which_class]['std']
+                    
+                return (data_x - mean) / std
+                
 
-                mean = config["mnist_mean"]
-                std = config["mnist_std"]
-
-            elif config["data_type"] == "cifar":
-
-                mean = config["cifar_mean"]
-                std = config["cifar_std"]
+            elif config["data_type"] == "cifar_yes":
+                
+                with open(
+                    '/home/asdflkj3123/mainDir/forUni/theDir1/DeepLearningFinal/newDataVer0/scripts/data_download_path/non_noise_data/cifar_ver/configs/mean_std_cifar_train.pkl',
+                    'rb'
+                ) as F:
+                    
+                    mean_std_per_label_dict = pickle.load(F)
+                    
+                    which_class = str(config.get("normal_label"))
+                    
+                    mean = mean_std_per_label_dict[which_class]['mean']
+                    std = mean_std_per_label_dict[which_class]['std']
+                    
+                return (data_x - mean) / std
 
             # elif config['data_type'] in [f'mnist_{i}' for i in range(1,11)]+[[f'cifar_{i}' for i in range(1,11)]]:
             elif config["data_type"] in [f"mnist_{i}" for i in range(1, 11)] + [
@@ -198,17 +221,17 @@ def check_and_normalize(data_x, config):
         and config.get("which_label_abnormal") is not None
     ):
 
-        if config["normalize"] is True:
+        if config["do_zScore"] is True:
 
             if config["data_type"] == "mnist":
-
-                mean = config["mnist_mean"]
-                std = config["mnist_std"]
+                raise Exception('legacy error')
+                # mean = config["mnist_mean"]
+                # std = config["mnist_std"]
 
             elif config["data_type"] == "cifar":
-
-                mean = config["cifar_mean"]
-                std = config["cifar_std"]
+                raise Exception('legacy error')
+                # mean = config["cifar_mean"]
+                # std = config["cifar_std"]
 
             elif config["data_type"] in [f"mnist_{i}" for i in range(1, 11)] + [
                 [f"cifar_{i}" for i in range(1, 11)]
