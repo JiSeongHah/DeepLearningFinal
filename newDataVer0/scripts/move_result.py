@@ -6,16 +6,17 @@ label_lst = [i for i in range(10)]
 # label_lst = [9]
 # noise_lst = [0.4,0.5,0.6,0.7,0.8,0.9]
 
-# data_lst = ['cifar_1','cifar_2','mnist_1','mnist_2','mnist_3']
-data_lst = ['cifar_3']
+# data_lst = ['cifar_1','cifar_2','mnist_1','mnist_2']
+data_lst = ['mnist_1','mnist_2']
+# data_lst = ['cifar_yes','mnist_yes']
 
 algorithm_lst = ['smoothed_dsvdd','vanilla_dsvdd','ocsvm']
 # algorithm_lst = ['denoising_dsvdd']
 
 for algo in algorithm_lst:
-    ori_path  = f'/home/asdflkj3123/mainDir/forUni/theDir1/DeepLearningFinal/newDataVer0/scripts2/history/{algo}_image_noised_add_1112_cifar_3_only'
+    ori_path  = f'/home/asdflkj3123/mainDir/forUni/theDir1/DeepLearningFinal/newDataVer0/scripts/history/{algo}_image_non_noise_new_start'
     
-    dest_path = f'/home/asdflkj3123/mainDir/forUni/theDir1/DeepLearningFinal/newDataVer0/scripts/history/{algo}_image_noised_add_1112_cifar_3_only'
+    dest_path = f'/home/asdflkj3123/mainDir/forUni/theDir1/DeepLearningFinal/newDataVer0/scripts/history/{algo}_image_noised_new_start'
 
     error_log = []
 
