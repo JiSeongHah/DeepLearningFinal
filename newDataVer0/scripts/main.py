@@ -12,6 +12,7 @@ import yaml
 from mainloop import MainLoop
 from datetime import datetime
 import copy
+import time 
 
 
 class runLoop:
@@ -36,7 +37,7 @@ class runLoop:
                     now = datetime.now()
                     self.savePath = os.path.join(
                         savePath,
-                        self.loadedConfig["which_model"] + "_image_non_noise_new_start",
+                        self.loadedConfig["which_model"] + "_testbed_new_start",
                         # self.loadedConfig["which_model"] + "_grad_test_run_test",
                         self.loadedConfig["data_type"],
                         "normal_label_" + str(self.loadedConfig["normal_label"]),
@@ -49,6 +50,9 @@ class runLoop:
                     self.loadedConfig["modelSavePath"] = self.savePath
 
                     self.run(doTestOnly=False)
+                    
+                    time.sleep(1)
+                    
 
     def copySaveResult(resultPath, savePath):
 
@@ -103,7 +107,7 @@ class runLoop:
 
 if __name__ == "__main__":
 
-    for i in range(2):
+    for i in range(10):
 
         configPath = "../configs/config.yaml"
 

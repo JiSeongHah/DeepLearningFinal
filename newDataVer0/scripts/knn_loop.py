@@ -84,26 +84,52 @@ class KnnLoop:
                 
                 filter_arr_dict = pickle.load(F)
             
-            
             target_filter_arr_dict = filter_arr_dict[
-                os.path.join(
+                '___'.join(
                     [
                         self.config['data_type'].split('_')[0],
-                        f'normal_label_{self.config['normal_label']}'
+                        f'normal_label_{self.config["normal_label"]}'
+                    ]
+                )
+            ]
+        elif self.config['data_type'] in self.testBest_intervalLst:
+            
+            with open('./800_Testbed/pkled_data/noised_data/label_idx_arr_per_ratio_testbed_raw_ver.pkl','rb') as F:
+                
+                filter_arr_dict = pickle.load(F)
+            print(filter_arr_dict.keys())
+            target_filter_arr_dict = filter_arr_dict[
+                '___'.join(
+                    [
+                        self.config['data_type'].split('_noiseRatio')[0],
+                        f'normal_label_{self.config["normal_label"]}'
+                    ]
+                )
+            ]
+        elif self.config['data_type'] in self.FEed_testBed_interval_dataLst:
+            
+            with open('./800_Testbed/pkled_data/FEed_data/label_idx_arr_per_ratio_testbed_FEed_ver.pkl','rb') as F:
+                
+                filter_arr_dict = pickle.load(F)
+            
+            target_filter_arr_dict = filter_arr_dict[
+                '___'.join(
+                    [
+                        self.config['data_type'].split('_noiseRatio')[0],
+                        f'normal_label_{self.config["normal_label"]}'
                     ]
                 )
             ]
             
+            
         testResult = {}
         for filter_k,filter_v in target_filter_arr_dict.items():
-            
-            
             
             filtered_x = x_test[filter_v]
             filtered_y = y_test[filter_v]
         
             print("knn model loading..")
-            self.knnModel = NearestNeighbors(n_neighbors = self.neiNum)
+            self.knnModel = NearestNeighbors(n_neighbors = self.config['nei_num'])
             print("loading knn  model complete")
             print("knn test start...")
             
@@ -114,9 +140,11 @@ class KnnLoop:
             y_anomaly_score = np.mean(dist,axis=1)
 
             each_testResult = {
-                "y_anomaly_score": y_anomaly_score,
-                "y_test": filtered_y,
-                "x_test": filtered_x,
+                # "y_anomaly_score": y_anomaly_score,
+                # "y_test": filtered_y,
+                # "x_test": filtered_x,
+                'test_score_raw': y_anomaly_score,
+                'test_label_raw': filtered_y
             }
             
             testResult[filter_k] = each_testResult

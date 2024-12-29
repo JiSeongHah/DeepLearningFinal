@@ -1,22 +1,33 @@
 import shutil
 import os
 
-label_lst = [i for i in range(10)]
-# noise_lst = [round(0.1*i,1) for i in range(1,11)]
-# label_lst = [9]
+# label_lst = [i for i in range(10)]
+noise_lst = [round(0.1*i,1) for i in range(1,11)]
+label_lst = [0]
 # noise_lst = [0.4,0.5,0.6,0.7,0.8,0.9]
+# noise_lst = [0.0,0.1,0.2,0.3]
 
 # data_lst = ['cifar_1','cifar_2','mnist_1','mnist_2']
-data_lst = ['mnist_1','mnist_2']
+# data_lst = ['mnist_1','mnist_2']
 # data_lst = ['cifar_yes','mnist_yes']
+data_lst = [  
+    '800_0_interval_4096_noiseRatio_0.0',
+    '800_0_interval_4096_noiseRatio_0.1',
+    '800_0_interval_4096_noiseRatio_0.2',
+    '800_0_interval_4096_noiseRatio_0.3',
+    '800_45_interval_4096_noiseRatio_0.0',
+    '800_45_interval_4096_noiseRatio_0.1',
+    '800_45_interval_4096_noiseRatio_0.2',
+    '800_45_interval_4096_noiseRatio_0.3',
+]
 
 algorithm_lst = ['smoothed_dsvdd','vanilla_dsvdd','ocsvm']
 # algorithm_lst = ['denoising_dsvdd']
 
 for algo in algorithm_lst:
-    ori_path  = f'/home/asdflkj3123/mainDir/forUni/theDir1/DeepLearningFinal/newDataVer0/scripts/history/{algo}_image_non_noise_new_start'
+    ori_path  = f'/home/asdflkj3123/mainDir/forUni/theDir1/DeepLearningFinal/newDataVer0/scripts2/history/{algo}_testbed_new_start/'
     
-    dest_path = f'/home/asdflkj3123/mainDir/forUni/theDir1/DeepLearningFinal/newDataVer0/scripts/history/{algo}_image_noised_new_start'
+    dest_path = f'/home/asdflkj3123/mainDir/forUni/theDir1/DeepLearningFinal/newDataVer0/scripts/history/{algo}_testbed_new_start/'
 
     error_log = []
 
@@ -64,7 +75,7 @@ for algo in algorithm_lst:
                     print(f'origianl_path : {final_ori_path}')
                     print(f'destination path : {final_dest_path}')
                     print('done')
-            
+        
     print()
     print()
     print()

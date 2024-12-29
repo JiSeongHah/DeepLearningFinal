@@ -6,6 +6,7 @@ from mySSVDD.ssvdd_train import ssvdd_train
 from mySSVDD.ssvdd_test import ssvdd_test
 from smoothedDSVDD_loop import smoothedDsvddLoop
 from denoisingDSVDD_loop import denoisingDsvddLoop
+from knn_loop import KnnLoop
 import os
 import pickle
 
@@ -58,6 +59,9 @@ class MainLoop:
 
         elif whichModel == "ocsvm":
             model = ocsvmLoop(config=self.config)
+            
+        elif whichModel == 'knn':
+            model = KnnLoop(config=self.config)
 
         elif whichModel == "vanilla_dsvdd":
             model = vanillaDsvddLoop(config=self.config)
@@ -82,6 +86,7 @@ class MainLoop:
 
         assert whichModel in [
             "ssvdd",
+            'knn',
             "ocsvm",
             "vanilla_dsvdd",
             "smoothed_dsvdd",
@@ -126,6 +131,10 @@ class MainLoop:
             self.config["trainResult"]["rocAuc"] = str(rocAuc)
 
             self.config["trainResult"]["time"] = datetime.now()
+            
+        elif whichModel in ['knn']:
+            
+            pass 
 
         elif whichModel in ["vanilla_dsvdd", "smoothed_dsvdd", "denoising_dsvdd"]:
             from pprint import pprint
@@ -178,6 +187,11 @@ class MainLoop:
 
         elif whichModel == "ocsvm":
             model = ocsvmLoop(config=self.config)
+            
+        elif whichModel == 'knn':
+            
+            model = KnnLoop(config=self.config)
+            
         elif whichModel == "vanilla_dsvdd":
             model = vanillaDsvddLoop(config=self.config)
 
@@ -199,16 +213,50 @@ class MainLoop:
 
         whichModel = self.config["which_model"]
         
-        test_score_raw = testResult['test_score_raw']
-        test_label_raw = testResult['test_label_raw']
-        
-        test_result_only_dict = {
-            'test_score':test_score_raw,
-            'test_label':test_label_raw
-        }
-        with open(os.path.join(self.config['modelSavePath'],'test_result_only.pkl'),'wb') as F:
-            pickle.dump(test_result_only_dict,F)
+        if whichModel != 'knn':
+            test_score_raw = testResult['test_score_raw']
+            test_label_raw = testResult['test_label_raw']
             
+            test_result_only_dict = {
+                'test_score':test_score_raw,
+                'test_label':test_label_raw
+            }
+            with open(os.path.join(self.config['modelSavePath'],'test_result_only.pkl'),'wb') as F:
+                pickle.dump(test_result_only_dict,F)
+                
+        if whichModel == 'knn':
+            
+            with open(os.path.join(self.config['modelSavePath'],'test_result_only.pkl'),'wb') as F:
+                pickle.dump(testResult,F)
+            
+            # from sklearn.metrics import (
+            #     roc_auc_score,
+            #     average_precision_score,
+            #     confusion_matrix,
+            #     precision_score,
+            #     recall_score,
+            #     f1_score,
+            # )
+            
+            self.config["testResult"] = {}
+            for k,v in testResult.items():
+                
+                each_score = v['test_score_raw']
+                each_label = v['test_label_raw']
+                
+                average_precision = average_precision_score(
+                    y_true=each_label,
+                    y_score=each_score
+                )
+                roc_auc = roc_auc_score(
+                    y_true=each_label,
+                    y_score=each_score
+                )
+                
+                self.config['testResult'][k] = {}
+                self.config['testResult'][k]['average_precision'] = average_precision
+                self.config['testResult'][k]['roc_auc'] = roc_auc
+                                
             
         if whichModel in ["ocsvm"]:
 
